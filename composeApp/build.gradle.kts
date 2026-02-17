@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 kotlin {
@@ -39,6 +40,12 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.compose.material.icons.extended)
+            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore.preferences)
+            implementation(libs.okio)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -76,4 +83,3 @@ android {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
-
