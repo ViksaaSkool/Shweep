@@ -94,7 +94,7 @@ fun CountingSheepScreen(
             
             val screenWidth = screenSize.width
             val screenHeight = screenSize.height
-            val playAreaHeight = screenHeight * 0.5f // bottom 50% of screen
+            val playAreaHeight = screenHeight * 0.65f // bottom 65% of screen
             
             if (screenWidth > 0 && screenHeight > 0) {
                 // Calculate scale based on sheep count
@@ -111,7 +111,7 @@ fun CountingSheepScreen(
                     sheep.scale = targetScale
                 }
                 
-                val playAreaStartY = screenHeight * 0.67f // Bottom third starts at 2/3 from top
+                val playAreaStartY = screenHeight * 0.35f // Bottom 65% starts at 35% from top
                 
                 // Update positions
                 sheepList.forEach { sheep ->
@@ -130,7 +130,7 @@ fun CountingSheepScreen(
                         sheep.vx = -kotlin.math.abs(sheep.vx)
                     }
                     
-                    // Bounce off top/bottom of play area (bottom 50% of screen)
+                    // Bounce off top/bottom of play area (bottom 65% of screen)
                     if (sheep.y <= playAreaStartY) {
                         sheep.y = playAreaStartY
                         sheep.vy = kotlin.math.abs(sheep.vy)
@@ -204,8 +204,8 @@ fun CountingSheepScreen(
                         // Add new sheep on swipe up
                         val screenWidth = screenSize.width
                         val screenHeight = screenSize.height
-                                                val playAreaStartY = screenHeight * 0.5f // Bottom 50% starts at 50% from top
-                        val playAreaHeight = screenHeight * 0.5f
+                        val playAreaStartY = screenHeight * 0.35f // Bottom 65% starts at 35% from top
+                        val playAreaHeight = screenHeight * 0.65f
                         
                         if (screenWidth > 0 && playAreaHeight > 0) {
                             val newSheep = SheepItem(
