@@ -1,8 +1,4 @@
-# Shweep App
-
-A relaxing sleep aid application that helps users fall asleep by counting animated sheep. Built with Kotlin Multiplatform and Compose for both Android and iOS.
-
-## Overview
+# Overview
 
 Shweep combines beautiful, calming visuals with interactive sheep animation to create a soothing bedtime experience. Users swipe up to add sheep, watch them wander and collide in a meadow, and track their sleep attempts over time.
 
@@ -55,6 +51,3 @@ git clone https://github.com/ViksaaSkool/Shweep.git
 - **Coroutines**: Asynchronous programming
 - **Figma**: Design system and assets
 
-## License
-
-Coming soon.
