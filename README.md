@@ -8,7 +8,7 @@ Technology meets tradition.
 
 # Demo 
 
-<img src="pics/0.png" width="200" height="400"/> <img src="pics/1.png" width="200" height="400"/> <img src="pics/video.gif" width="200" height="400"/>
+<img src="art/scr/0.png" width="200" height="400"/> <img src="art/scr/1.png" width="200" height="400"/> <img src="art/scr/video.gif" width="200" height="400"/>
 
 
 # About 
