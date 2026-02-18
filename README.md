@@ -24,4 +24,6 @@ The app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
 For implementation switch branches and go to `develop_opencode_kimi` branch to see the vibe engineering details 
 with the help of OpenCode and Kimi 2.5 or click [here](https://github.com/ViksaaSkool/Shweep/tree/develop_opencode_kimi).
 
-# License 
+# License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details. 
