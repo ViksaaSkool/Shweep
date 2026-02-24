@@ -18,6 +18,7 @@ import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
 
@@ -107,7 +108,7 @@ private fun HistoryListItem(session: Session) {
         val instant = Instant.fromEpochMilliseconds(session.startTime)
         val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
 
-        val date = "${localDateTime.monthNumber}/${localDateTime.dayOfMonth}/${localDateTime.year}"
+        val date = "${localDateTime.month.number}/${localDateTime.day}/${localDateTime.year}"
         val time = "${localDateTime.hour.toString().padStart(2, '0')}:${localDateTime.minute.toString().padStart(2, '0')}"
 
         Pair(date, time)
