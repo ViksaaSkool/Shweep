@@ -22,10 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_counting
@@ -37,10 +34,11 @@ import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
 import kotlin.math.sqrt
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 @Composable
 fun CountingSheepScreen(
     onBackClick: () -> Unit,

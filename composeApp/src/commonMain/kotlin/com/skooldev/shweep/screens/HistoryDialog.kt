@@ -19,6 +19,7 @@ import com.skooldev.shweep.ui.theme.Strings
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun HistoryDialog(
@@ -99,6 +100,7 @@ fun HistoryDialog(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 private fun HistoryListItem(session: Session) {
     val dateTime = remember(session.startTime) {
