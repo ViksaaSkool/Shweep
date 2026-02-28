@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_start
@@ -133,4 +134,13 @@ fun StartScreen(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun StartScreenPreview() {
+    StartScreen(
+        onGoToSleepClick = {},
+        onHistoryClick = {}
+    )
 }

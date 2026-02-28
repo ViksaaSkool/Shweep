@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Clock
@@ -27,6 +28,7 @@ import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_counting
 import shweep.composeapp.generated.resources.sheep
+import com.skooldev.shweep.data.MockSessionRepository
 import com.skooldev.shweep.data.Session
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.ui.theme.Dimens
@@ -321,4 +323,14 @@ private fun SwipeUpIndicator() {
             fontWeight = FontWeight.Medium
         )
     }
+}
+
+@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@Preview
+@Composable
+fun CountingSheepScreenPreview() {
+    CountingSheepScreen(
+        onBackClick = {},
+        sessionRepository = MockSessionRepository()
+    )
 }

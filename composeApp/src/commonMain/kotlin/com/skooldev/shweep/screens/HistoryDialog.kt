@@ -10,7 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
+import com.skooldev.shweep.data.MockSessionRepository
+import com.skooldev.shweep.data.EmptySessionRepository
 import com.skooldev.shweep.data.Session
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.ui.theme.Dimens
@@ -98,6 +101,24 @@ fun HistoryDialog(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun HistoryDialogWithDataPreview() {
+    HistoryDialog(
+        onDismiss = {},
+        sessionRepository = MockSessionRepository()
+    )
+}
+
+@Preview
+@Composable
+fun HistoryDialogEmptyPreview() {
+    HistoryDialog(
+        onDismiss = {},
+        sessionRepository = EmptySessionRepository()
+    )
 }
 
 @OptIn(ExperimentalTime::class)

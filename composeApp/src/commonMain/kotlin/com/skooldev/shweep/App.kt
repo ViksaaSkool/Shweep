@@ -2,7 +2,8 @@ package com.skooldev.shweep
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import com.skooldev.shweep.data.SessionRepository
+import androidx.compose.ui.tooling.preview.Preview
+import com.skooldev.shweep.data.SessionRepositoryImpl
 import com.skooldev.shweep.data.createDataStore
 import com.skooldev.shweep.screens.StartScreen
 import com.skooldev.shweep.screens.CountingSheepScreen
@@ -19,7 +20,7 @@ fun App() {
         var currentScreen by remember { mutableStateOf(Screen.Start) }
         var showHistoryDialog by remember { mutableStateOf(false) }
         
-        val sessionRepository = remember { SessionRepository(createDataStore()) }
+        val sessionRepository = remember { SessionRepositoryImpl(createDataStore()) }
         
         when (currentScreen) {
             Screen.Start -> {
@@ -42,5 +43,13 @@ fun App() {
                 sessionRepository = sessionRepository
             )
         }
+    }
+}
+
+@Preview
+@Composable
+fun AppPreview() {
+    MaterialTheme {
+        App()
     }
 }
