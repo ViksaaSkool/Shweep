@@ -306,7 +306,7 @@ private fun SwipeUpIndicator() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Default.KeyboardArrowUp,
+            imageVector = Icons.Filled.KeyboardArrowUp,
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
