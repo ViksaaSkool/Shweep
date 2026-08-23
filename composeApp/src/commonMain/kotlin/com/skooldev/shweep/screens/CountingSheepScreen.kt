@@ -42,7 +42,8 @@ import kotlin.uuid.Uuid
 @Composable
 fun CountingSheepScreen(
     onBackClick: () -> Unit,
-    sessionRepository: SessionRepository
+    sessionRepository: SessionRepository,
+    sheepArtwork: SheepArtwork = SheepArtwork.WHITE
 ) {
     var isUserInteracting by remember { mutableStateOf(false) }
     var elapsedTime by remember { mutableStateOf(0) }
@@ -150,7 +151,7 @@ fun CountingSheepScreen(
                                 y = playAreaStartY + Random.nextFloat() * (playAreaHeight - sheepBaseSizePx),
                                 vx = (Random.nextFloat() - 0.5f) * 500f,
                                 vy = (Random.nextFloat() - 0.5f) * 500f,
-                                artwork = SheepArtwork.WHITE,
+                                artwork = sheepArtwork,
                                 // Golden-angle spacing keeps flock legs out of sync.
                                 gaitPhaseRadians = SheepGait.positiveModulo(
                                     sheepCount * 2.3999632f,

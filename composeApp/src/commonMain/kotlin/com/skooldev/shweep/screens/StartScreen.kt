@@ -3,6 +3,8 @@ package com.skooldev.shweep.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +23,8 @@ import com.skooldev.shweep.ui.theme.Strings
 @Composable
 fun StartScreen(
     onGoToSleepClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
@@ -38,6 +41,7 @@ fun StartScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .systemBarsPadding()
                 .padding(Dimens.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -133,6 +137,27 @@ fun StartScreen(
                 }
             }
         }
+
+        // Settings gear button - top right, above content
+        IconButton(
+            onClick = onSettingsClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .systemBarsPadding()
+                .padding(Dimens.screenPadding)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(Dimens.cardCornerRadiusSmall),
+                color = AppColors.CardBackgroundMediumAlpha
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = Strings.CD_GEAR,
+                    tint = AppColors.TextPrimary,
+                    modifier = Modifier.padding(Dimens.paddingLarge)
+                )
+            }
+        }
     }
 }
 
@@ -141,6 +166,7 @@ fun StartScreen(
 fun StartScreenPreview() {
     StartScreen(
         onGoToSleepClick = {},
-        onHistoryClick = {}
+        onHistoryClick = {},
+        onSettingsClick = {}
     )
 }

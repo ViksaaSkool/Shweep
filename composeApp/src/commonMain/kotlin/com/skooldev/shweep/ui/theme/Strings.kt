@@ -28,4 +28,17 @@ object Strings {
     
     // History
     const val NO_HISTORY = "No history"
+
+    // Settings
+    const val SETTINGS_TITLE = "Settings"
+    const val SETTINGS_OPEN = "Open settings"
+    const val SETTINGS_CLOSE = "Close settings"
+    const val SHEEP_COLOR_TITLE = "Sheep color"
+    const val SHEEP_COLOR_WHITE = "White sheep"
+    const val SHEEP_COLOR_BLACK = "Black sheep"
+    const val PRIVACY_POLICY = "Privacy Policy"
+    const val TERMS_OF_SERVICE = "Terms of Service"
+    const val BUY_DEVELOPER_COFFEE = "Buy the developer a coffee"
+    const val LINK_OPENS_IN_BROWSER = "Opens in your browser"
+    const val CD_GEAR = "Settings"
 }
