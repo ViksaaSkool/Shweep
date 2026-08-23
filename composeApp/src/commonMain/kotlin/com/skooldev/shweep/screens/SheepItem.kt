@@ -1,10 +1,17 @@
 package com.skooldev.shweep.screens
 
+enum class SheepArtwork {
+    WHITE,
+    BLACK
+}
+
 data class SheepItem(
     val id: Int,
-    var x: Float,
-    var y: Float,
-    var vx: Float,
-    var vy: Float,
-    var scale: Float = 1f
+    val x: Float,
+    val y: Float,
+    val vx: Float,
+    val vy: Float,
+    val scale: Float = 1f,
+    val artwork: SheepArtwork = SheepArtwork.WHITE,
+    val gaitPhaseRadians: Float = 0f
 )

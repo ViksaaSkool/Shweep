@@ -27,14 +27,12 @@ import kotlin.time.Clock
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_counting
-import shweep.composeapp.generated.resources.sheep
 import com.skooldev.shweep.data.MockSessionRepository
 import com.skooldev.shweep.data.Session
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
-import kotlin.math.sqrt
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -50,7 +48,8 @@ fun CountingSheepScreen(
     var elapsedTime by remember { mutableStateOf(0) }
     var sheepCount by remember { mutableStateOf(0) }
     var screenSize by remember { mutableStateOf(Size.Zero) }
-    val sheepList = remember { mutableStateListOf<SheepItem>() }
+    var frameCounter by remember { mutableIntStateOf(0) }
+    val sheepList = remember { mutableStateOf<List<SheepItem>>(emptyList()) }
     val density = LocalDensity.current
 
     val sessionStartTime: Long = remember { Clock.System.now().toEpochMilliseconds() }
@@ -82,79 +81,44 @@ fun CountingSheepScreen(
         }
     }
 
-    LaunchedEffect(sheepList.size) {
+    LaunchedEffect(Unit) {
+        var lastFrameTimeNanos = 0L
         while (true) {
-            delay(8)
+            withFrameNanos { frameTimeNanos ->
+                if (lastFrameTimeNanos != 0L) {
+                    val deltaSeconds =
+                        ((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000.0).toFloat()
+                            .coerceAtMost(SheepSimulation.MAX_DELTA_SECONDS)
+                    lastFrameTimeNanos = frameTimeNanos
+                    frameCounter++
 
-            val screenWidth = screenSize.width
-            val screenHeight = screenSize.height
+                    val screenWidth = screenSize.width
+                    val screenHeight = screenSize.height
 
-            if (screenWidth > 0 && screenHeight > 0) {
-                val targetScale = if (sheepList.size > maxSheepBeforeShrink) {
-                    val scaleFactor = maxSheepBeforeShrink.toFloat() / sheepList.size.toFloat()
-                    maxOf(minScale, scaleFactor)
-                } else 1f
+                    if (screenWidth > 0 && screenHeight > 0 && deltaSeconds > 0f) {
+                        val playAreaStartY = screenHeight * 0.35f
 
-                sheepList.forEach { sheep -> sheep.scale = targetScale }
+                        val targetScale = if (sheepList.value.size > maxSheepBeforeShrink) {
+                            val scaleFactor =
+                                maxSheepBeforeShrink.toFloat() / sheepList.value.size.toFloat()
+                            maxOf(minScale, scaleFactor)
+                        } else 1f
 
-                val playAreaStartY = screenHeight * 0.35f
+                        val stepped = SheepSimulation.step(
+                            sheepList = sheepList.value,
+                            screenWidth = screenWidth,
+                            screenHeight = screenHeight,
+                            playAreaStartY = playAreaStartY,
+                            sheepBaseSizePx = sheepBaseSizePx,
+                            targetScale = targetScale,
+                            deltaSeconds = deltaSeconds
+                        )
 
-                sheepList.forEach { sheep ->
-                    val currentSize = sheepBaseSizePx * sheep.scale
-
-                    sheep.x += sheep.vx
-                    sheep.y += sheep.vy
-
-                    if (sheep.x <= 0) {
-                        sheep.x = 0f
-                        sheep.vx = kotlin.math.abs(sheep.vx)
-                    } else if (sheep.x >= screenWidth - currentSize) {
-                        sheep.x = screenWidth - currentSize
-                        sheep.vx = -kotlin.math.abs(sheep.vx)
+                        sheepList.value = stepped.filter { it.scale > minScale + 0.01f }
                     }
-
-                    if (sheep.y <= playAreaStartY) {
-                        sheep.y = playAreaStartY
-                        sheep.vy = kotlin.math.abs(sheep.vy)
-                    } else if (sheep.y >= screenHeight - currentSize) {
-                        sheep.y = screenHeight - currentSize
-                        sheep.vy = -kotlin.math.abs(sheep.vy)
-                    }
+                } else {
+                    lastFrameTimeNanos = frameTimeNanos
                 }
-
-                for (i in sheepList.indices) {
-                    for (j in i + 1 until sheepList.size) {
-                        val sheep1 = sheepList[i]
-                        val sheep2 = sheepList[j]
-
-                        val dx = (sheep2.x + sheepBaseSizePx * sheep2.scale / 2) -
-                                (sheep1.x + sheepBaseSizePx * sheep1.scale / 2)
-                        val dy = (sheep2.y + sheepBaseSizePx * sheep2.scale / 2) -
-                                (sheep1.y + sheepBaseSizePx * sheep1.scale / 2)
-                        val distance = sqrt(dx * dx + dy * dy)
-                        val minDistance = (sheepBaseSizePx * sheep1.scale + sheepBaseSizePx * sheep2.scale) / 2
-
-                        if (distance < minDistance && distance > 0) {
-                            val nx = dx / distance
-                            val ny = dy / distance
-
-                            val tempVx = sheep1.vx
-                            val tempVy = sheep1.vy
-                            sheep1.vx = sheep2.vx
-                            sheep1.vy = sheep2.vy
-                            sheep2.vx = tempVx
-                            sheep2.vy = tempVy
-
-                            val overlap = minDistance - distance
-                            sheep1.x -= nx * overlap / 2
-                            sheep1.y -= ny * overlap / 2
-                            sheep2.x += nx * overlap / 2
-                            sheep2.y += ny * overlap / 2
-                        }
-                    }
-                }
-
-                sheepList.removeAll { it.scale <= minScale + 0.01f }
             }
         }
     }
@@ -184,10 +148,16 @@ fun CountingSheepScreen(
                                 id = sheepCount,
                                 x = Random.nextFloat() * (screenWidth - sheepBaseSizePx),
                                 y = playAreaStartY + Random.nextFloat() * (playAreaHeight - sheepBaseSizePx),
-                                vx = (Random.nextFloat() - 0.5f) * 4f,
-                                vy = (Random.nextFloat() - 0.5f) * 4f
+                                vx = (Random.nextFloat() - 0.5f) * 500f,
+                                vy = (Random.nextFloat() - 0.5f) * 500f,
+                                artwork = SheepArtwork.WHITE,
+                                // Golden-angle spacing keeps flock legs out of sync.
+                                gaitPhaseRadians = SheepGait.positiveModulo(
+                                    sheepCount * 2.3999632f,
+                                    SheepGait.TAU
+                                )
                             )
-                            sheepList.add(newSheep)
+                            sheepList.value += newSheep
                             sheepCount++
                         }
                     }
@@ -201,20 +171,12 @@ fun CountingSheepScreen(
             contentScale = ContentScale.Crop
         )
 
-        sheepList.forEach { sheep ->
-            val currentSize = sheepBaseSize * sheep.scale
-            Image(
-                painter = painterResource(Res.drawable.sheep),
-                contentDescription = "Sheep ${sheep.id}",
-                modifier = Modifier
-                    .size(currentSize)
-                    .offset(
-                        x = with(density) { sheep.x.toDp() },
-                        y = with(density) { sheep.y.toDp() }
-                    ),
-                contentScale = ContentScale.Fit
-            )
-        }
+        LayeredSheepCanvas(
+            sheepList = sheepList.value,
+            sheepBaseSizePx = sheepBaseSizePx,
+            frameCounter = frameCounter,
+            modifier = Modifier.fillMaxSize()
+        )
 
         Column(
             modifier = Modifier
