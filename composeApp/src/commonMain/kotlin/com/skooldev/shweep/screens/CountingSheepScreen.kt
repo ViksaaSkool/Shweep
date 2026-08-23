@@ -27,12 +27,16 @@ import kotlin.time.Clock
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_counting
+import kotlin.math.abs
+import kotlin.math.hypot
+import kotlin.math.roundToInt
 import com.skooldev.shweep.data.MockSessionRepository
 import com.skooldev.shweep.data.Session
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
+import kotlin.math.floor
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -57,8 +61,15 @@ fun CountingSheepScreen(
 
     val sheepBaseSize = 80.dp
     val sheepBaseSizePx = with(density) { sheepBaseSize.toPx() }
-    val minScale = 0.1f
-    val maxSheepBeforeShrink = 20
+    val currentScreenWidth = screenSize.width
+    val currentScreenHeight = screenSize.height
+    val currentPlayAreaStartY = currentScreenHeight * 0.35f
+    val currentPlayAreaHeight = currentScreenHeight - currentPlayAreaStartY
+    val meadowCapacity = calculateMeadowCapacity(
+        screenWidth = currentScreenWidth,
+        playAreaHeight = currentPlayAreaHeight,
+        sheepBaseSizePx = sheepBaseSizePx
+    )
 
     DisposableEffect(Unit) {
         onDispose {
@@ -99,23 +110,16 @@ fun CountingSheepScreen(
                     if (screenWidth > 0 && screenHeight > 0 && deltaSeconds > 0f) {
                         val playAreaStartY = screenHeight * 0.35f
 
-                        val targetScale = if (sheepList.value.size > maxSheepBeforeShrink) {
-                            val scaleFactor =
-                                maxSheepBeforeShrink.toFloat() / sheepList.value.size.toFloat()
-                            maxOf(minScale, scaleFactor)
-                        } else 1f
-
                         val stepped = SheepSimulation.step(
                             sheepList = sheepList.value,
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
                             playAreaStartY = playAreaStartY,
                             sheepBaseSizePx = sheepBaseSizePx,
-                            targetScale = targetScale,
                             deltaSeconds = deltaSeconds
                         )
 
-                        sheepList.value = stepped.filter { it.scale > minScale + 0.01f }
+                        sheepList.value = stepped.filter { shouldKeepSheep(it, screenWidth, screenHeight, playAreaStartY, sheepBaseSizePx) }
                     }
                 } else {
                     lastFrameTimeNanos = frameTimeNanos
@@ -142,23 +146,50 @@ fun CountingSheepScreen(
                         val screenWidth = screenSize.width
                         val screenHeight = screenSize.height
                         val playAreaStartY = screenHeight * 0.35f
-                        val playAreaHeight = screenHeight * 0.65f
+                        val playAreaHeight = screenHeight - playAreaStartY
 
                         if (screenWidth > 0 && playAreaHeight > 0) {
+                            val activeSheep = sheepList.value.filter { !it.isDriftingAway }
+
+                            val spawnX = Random.nextFloat() * maxOf(0f, screenWidth - sheepBaseSizePx)
+                            val spawnY = playAreaStartY + Random.nextFloat() * maxOf(0f, playAreaHeight - sheepBaseSizePx)
+                            val isFull = activeSheep.size >= meadowCapacity
+                            val updatedSheep = mutableListOf<SheepItem>()
+
+                            if (isFull && activeSheep.isNotEmpty()) {
+                                val sorted = activeSheep.sortedBy { it.id }
+                                val candidates = sorted.take(2)
+                                candidates.forEach { candidate ->
+                                    updatedSheep.add(
+                                        startDrifting(candidate, screenWidth, sheepBaseSizePx)
+                                    )
+                                }
+                                updatedSheep.addAll(
+                                    sheepList.value.filter { it !in candidates }
+                                )
+                            } else {
+                                updatedSheep.addAll(sheepList.value)
+                            }
+
+                            val lifetime = Random.nextFloat() * 5f + 10f
+                            val turnInterval = Random.nextFloat() * 0.5f + 0.7f
                             val newSheep = SheepItem(
                                 id = sheepCount,
-                                x = Random.nextFloat() * (screenWidth - sheepBaseSizePx),
-                                y = playAreaStartY + Random.nextFloat() * (playAreaHeight - sheepBaseSizePx),
+                                x = spawnX,
+                                y = spawnY,
                                 vx = (Random.nextFloat() - 0.5f) * 500f,
                                 vy = (Random.nextFloat() - 0.5f) * 500f,
                                 artwork = sheepArtwork,
-                                // Golden-angle spacing keeps flock legs out of sync.
                                 gaitPhaseRadians = SheepGait.positiveModulo(
                                     sheepCount * 2.3999632f,
                                     SheepGait.TAU
-                                )
+                                ),
+                                lifetimeSeconds = lifetime,
+                                nextZigzagTurnIn = turnInterval,
+                                zigzagTurnInterval = turnInterval
                             )
-                            sheepList.value += newSheep
+                            updatedSheep.add(newSheep)
+                            sheepList.value = updatedSheep
                             sheepCount++
                         }
                     }
@@ -296,4 +327,30 @@ fun CountingSheepScreenPreview() {
         onBackClick = {},
         sessionRepository = MockSessionRepository()
     )
+}
+
+internal fun calculateMeadowCapacity(
+    screenWidth: Float,
+    playAreaHeight: Float,
+    sheepBaseSizePx: Float
+): Int {
+    if (screenWidth <= 0f || playAreaHeight <= 0f || sheepBaseSizePx <= 0f) return 1
+    val columns = floor(screenWidth / sheepBaseSizePx).toInt().coerceAtLeast(1)
+    val rows = floor(playAreaHeight / sheepBaseSizePx).toInt().coerceAtLeast(1)
+    return columns * rows
+}
+
+internal fun shouldKeepSheep(
+    sheep: SheepItem,
+    screenWidth: Float,
+    screenHeight: Float,
+    playAreaStartY: Float,
+    sheepBaseSizePx: Float
+): Boolean {
+    if (!sheep.isDriftingAway) return true
+    val isBeyondLeft = sheep.x + sheepBaseSizePx <= 0f
+    val isBeyondRight = sheep.x >= screenWidth
+    val isBeyondTop = sheep.y + sheepBaseSizePx <= playAreaStartY
+    val isBeyondBottom = sheep.y >= screenHeight
+    return !(isBeyondLeft || isBeyondRight || isBeyondTop || isBeyondBottom)
 }

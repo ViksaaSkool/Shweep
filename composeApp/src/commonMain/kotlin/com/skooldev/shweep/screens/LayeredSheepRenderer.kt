@@ -90,7 +90,7 @@ internal fun LayeredSheepCanvas(
             )
 
             // Maps source artwork units to current on-screen pixels.
-            val unitScale = sheepBaseSizePx * sheep.scale / 1024f
+            val unitScale = sheepBaseSizePx / 1024f
 
             withTransform({
                 translate(left = sheep.x, top = sheep.y + pose.bodyBobSourceUnits * unitScale)

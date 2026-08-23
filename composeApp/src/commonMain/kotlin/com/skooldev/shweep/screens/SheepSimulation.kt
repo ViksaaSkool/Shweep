@@ -1,6 +1,9 @@
 package com.skooldev.shweep.screens
 
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -15,65 +18,146 @@ internal object SheepSimulation {
     /** Largest simulated time step in seconds; larger gaps are clamped to this. */
     const val MAX_DELTA_SECONDS = 0.05f
 
+    /** Zig-zag turn angle in radians (~20 degrees). */
+    const val ZIGZAG_ANGLE_RADIANS = (20.0 * PI / 180.0).toFloat()
+
     fun step(
         sheepList: List<SheepItem>,
         screenWidth: Float,
         screenHeight: Float,
         playAreaStartY: Float,
         sheepBaseSizePx: Float,
-        targetScale: Float,
         deltaSeconds: Float
     ): List<SheepItem> {
         val dt = deltaSeconds.coerceIn(0f, MAX_DELTA_SECONDS)
         val result = ArrayList<SheepItem>(sheepList.size)
 
-        // Movement and boundary reflection.
         for (sheep in sheepList) {
-            val size = sheepBaseSizePx * targetScale
-
-            var x = sheep.x + sheep.vx * dt
-            var y = sheep.y + sheep.vy * dt
-            var vx = sheep.vx
-            var vy = sheep.vy
-
-            if (x <= 0f) {
-                x = 0f
-                vx = abs(vx)
-            } else if (x >= screenWidth - size) {
-                x = screenWidth - size
-                vx = -abs(vx)
-            }
-
-            if (y <= playAreaStartY) {
-                y = playAreaStartY
-                vy = abs(vy)
-            } else if (y >= screenHeight - size) {
-                y = screenHeight - size
-                vy = -abs(vy)
-            }
-
             result.add(
-                sheep.copy(
-                    x = x,
-                    y = y,
-                    vx = vx,
-                    vy = vy,
-                    scale = targetScale,
-                    // Uses pre-collision velocity: overlap correction must not
-                    // make resting sheep appear to step.
-                    gaitPhaseRadians = SheepGait.advancePhase(
-                        currentPhaseRadians = sheep.gaitPhaseRadians,
-                        speedPxPerSecond = SheepGait.speed(sheep.vx, sheep.vy),
-                        deltaSeconds = dt,
-                        sheepBaseSizePx = sheepBaseSizePx
-                    )
-                )
+                if (sheep.isDriftingAway) {
+                    stepDriftingSheep(sheep, screenWidth, screenHeight, playAreaStartY, sheepBaseSizePx, dt)
+                } else {
+                    stepActiveSheep(sheep, screenWidth, screenHeight, playAreaStartY, sheepBaseSizePx, dt)
+                }
             )
         }
 
         resolveCollisions(result, sheepBaseSizePx, screenWidth, screenHeight, playAreaStartY)
 
         return result
+    }
+
+    private fun stepActiveSheep(
+        sheep: SheepItem,
+        screenWidth: Float,
+        screenHeight: Float,
+        playAreaStartY: Float,
+        sheepBaseSizePx: Float,
+        dt: Float
+    ): SheepItem {
+        val age = sheep.ageSeconds + dt
+
+        if (age >= sheep.lifetimeSeconds) {
+            return startDrifting(sheep.copy(ageSeconds = age), screenWidth, sheepBaseSizePx)
+        }
+
+        var vx = sheep.vx
+        var vy = sheep.vy
+        var nextTurn = sheep.nextZigzagTurnIn - dt
+
+        if (nextTurn <= 0f) {
+            val angle = ZIGZAG_ANGLE_RADIANS * sheep.zigzagDirection
+            val cosA = cos(angle.toDouble()).toFloat()
+            val sinA = sin(angle.toDouble()).toFloat()
+            val newVx = vx * cosA - vy * sinA
+            val newVy = vx * sinA + vy * cosA
+            val speed = sqrt(vx * vx + vy * vy)
+            val newSpeed = sqrt(newVx * newVx + newVy * newVy)
+            if (newSpeed > 0f && speed > 0f) {
+                vx = newVx * speed / newSpeed
+                vy = newVy * speed / newSpeed
+            }
+            nextTurn = sheep.zigzagTurnInterval
+        }
+
+        val size = sheepBaseSizePx
+        var x = sheep.x + vx * dt
+        var y = sheep.y + vy * dt
+
+        if (x <= 0f) {
+            x = 0f
+            vx = abs(vx)
+        } else if (x >= screenWidth - size) {
+            x = screenWidth - size
+            vx = -abs(vx)
+        }
+
+        if (y <= playAreaStartY) {
+            y = playAreaStartY
+            vy = abs(vy)
+        } else if (y >= screenHeight - size) {
+            y = screenHeight - size
+            vy = -abs(vy)
+        }
+
+        return sheep.copy(
+            x = x,
+            y = y,
+            vx = vx,
+            vy = vy,
+            ageSeconds = age,
+            zigzagDirection = -sheep.zigzagDirection,
+            nextZigzagTurnIn = nextTurn,
+            gaitPhaseRadians = SheepGait.advancePhase(
+                currentPhaseRadians = sheep.gaitPhaseRadians,
+                speedPxPerSecond = SheepGait.speed(vx, vy),
+                deltaSeconds = dt,
+                sheepBaseSizePx = sheepBaseSizePx
+            )
+        )
+    }
+
+    private fun stepDriftingSheep(
+        sheep: SheepItem,
+        screenWidth: Float,
+        screenHeight: Float,
+        playAreaStartY: Float,
+        sheepBaseSizePx: Float,
+        dt: Float
+    ): SheepItem {
+        val size = sheepBaseSizePx
+        var x = sheep.x
+        var y = sheep.y
+        var vy = sheep.vy
+        var driftSpeedX = sheep.driftSpeedX
+
+        if (driftSpeedX == 0f) {
+            driftSpeedX = if (sheep.x + size / 2f <= screenWidth / 2f) -500f else 500f
+        }
+
+        x += driftSpeedX * dt
+        y += vy * dt
+
+        if (y < playAreaStartY) {
+            y = playAreaStartY
+            vy = abs(vy)
+        } else if (y > screenHeight - size) {
+            y = screenHeight - size
+            vy = -abs(vy)
+        }
+
+        return sheep.copy(
+            x = x,
+            y = y,
+            vy = vy,
+            driftSpeedX = driftSpeedX,
+            gaitPhaseRadians = SheepGait.advancePhase(
+                currentPhaseRadians = sheep.gaitPhaseRadians,
+                speedPxPerSecond = SheepGait.speed(driftSpeedX, vy),
+                deltaSeconds = dt,
+                sheepBaseSizePx = sheepBaseSizePx
+            )
+        )
     }
 
     /**
@@ -98,10 +182,12 @@ internal object SheepSimulation {
         val n = sheep.size
         for (i in 0 until n) {
             val a = sheep[i]
-            val radiusA = baseSizePx * a.scale / 2f
+            if (a.isDriftingAway) continue
+            val radiusA = baseSizePx / 2f
             for (j in i + 1 until n) {
                 val b = sheep[j]
-                val radiusB = baseSizePx * b.scale / 2f
+                if (b.isDriftingAway) continue
+                val radiusB = baseSizePx / 2f
 
                 val minDistance = radiusA + radiusB
                 val dx = centerX(b, baseSizePx) - centerX(a, baseSizePx)
@@ -113,7 +199,6 @@ internal object SheepSimulation {
                 val ny: Float
                 val distance: Float
                 if (distanceSquared <= 0f) {
-                    // Identical centers: pick an arbitrary but stable normal.
                     nx = 1f
                     ny = 0f
                     distance = 0f
@@ -123,7 +208,6 @@ internal object SheepSimulation {
                     ny = dy / distance
                 }
 
-                // Separate the overlap symmetrically.
                 val halfOverlap = (minDistance - distance) / 2f
                 var movedA = a.copy(
                     x = a.x - nx * halfOverlap,
@@ -134,13 +218,11 @@ internal object SheepSimulation {
                     y = b.y + ny * halfOverlap
                 )
 
-                // Impulse only while approaching: relative normal velocity < 0.
                 val relativeNormalVelocity =
                     (movedB.vx - movedA.vx) * nx + (movedB.vy - movedA.vy) * ny
                 if (relativeNormalVelocity < 0f) {
                     val normalVelocityA = movedA.vx * nx + movedA.vy * ny
                     val normalVelocityB = movedB.vx * nx + movedB.vy * ny
-                    // Equal masses exchange their normal components.
                     val newNormalVelocityA = normalVelocityB
                     val newNormalVelocityB = normalVelocityA
 
@@ -167,7 +249,7 @@ internal object SheepSimulation {
         screenHeight: Float,
         playAreaStartY: Float
     ): SheepItem {
-        val size = baseSizePx * sheep.scale
+        val size = baseSizePx
         return sheep.copy(
             x = sheep.x.coerceIn(0f, maxOf(0f, screenWidth - size)),
             y = sheep.y.coerceIn(playAreaStartY, maxOf(playAreaStartY, screenHeight - size))
@@ -175,8 +257,17 @@ internal object SheepSimulation {
     }
 
     private fun centerX(sheep: SheepItem, baseSizePx: Float): Float =
-        sheep.x + baseSizePx * sheep.scale / 2f
+        sheep.x + baseSizePx / 2f
 
     private fun centerY(sheep: SheepItem, baseSizePx: Float): Float =
-        sheep.y + baseSizePx * sheep.scale / 2f
+        sheep.y + baseSizePx / 2f
+}
+
+internal fun startDrifting(sheep: SheepItem, screenWidth: Float, sheepBaseSizePx: Float): SheepItem {
+    val centerX = sheep.x + sheepBaseSizePx / 2f
+    val goLeft = centerX <= screenWidth / 2f
+    return sheep.copy(
+        isDriftingAway = true,
+        driftSpeedX = if (goLeft) -500f else 500f
+    )
 }
