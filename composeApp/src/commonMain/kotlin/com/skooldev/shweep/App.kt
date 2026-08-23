@@ -89,7 +89,7 @@ fun App() {
             )
         }
 
-        BackHandler(enabled = currentScreen == Screen.Settings) {
+        BackHandler(enabled = currentScreen == Screen.Settings || currentScreen == Screen.Counting) {
             currentScreen = Screen.Start
         }
 
