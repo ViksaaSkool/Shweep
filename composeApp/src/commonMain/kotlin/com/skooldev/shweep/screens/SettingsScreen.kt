@@ -11,6 +11,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,12 +35,15 @@ import com.skooldev.shweep.ui.theme.Strings
 @Composable
 fun SettingsScreen(
     selectedColor: SheepColor,
-    onColorSelected: (SheepColor) -> Unit,
+    onSaveColor: (SheepColor) -> Unit,
     onPrivacyPolicyClick: () -> Unit,
     onTermsOfServiceClick: () -> Unit,
     onBuyCoffeeClick: () -> Unit,
     onBack: () -> Unit
 ) {
+    var pendingColor by remember { mutableStateOf(selectedColor) }
+    val hasChanges = pendingColor != selectedColor
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(Res.drawable.background_start),
@@ -112,8 +119,8 @@ fun SettingsScreen(
                     SheepColorOption(
                         label = Strings.SHEEP_COLOR_WHITE,
                         imageRes = Res.drawable.sheep,
-                        selected = selectedColor == SheepColor.WHITE,
-                        onClick = { onColorSelected(SheepColor.WHITE) }
+                        selected = pendingColor == SheepColor.WHITE,
+                        onClick = { pendingColor = SheepColor.WHITE }
                     )
 
                     Spacer(modifier = Modifier.height(Dimens.spacingSmall))
@@ -121,8 +128,8 @@ fun SettingsScreen(
                     SheepColorOption(
                         label = Strings.SHEEP_COLOR_BLACK,
                         imageRes = Res.drawable.black_sheep,
-                        selected = selectedColor == SheepColor.BLACK,
-                        onClick = { onColorSelected(SheepColor.BLACK) }
+                        selected = pendingColor == SheepColor.BLACK,
+                        onClick = { pendingColor = SheepColor.BLACK }
                     )
                 }
             }
@@ -176,6 +183,27 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(Dimens.spacingXXXLarge))
+
+            if (hasChanges) {
+                Button(
+                    onClick = { onSaveColor(pendingColor) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.buttonHeight),
+                    shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.Primary
+                    )
+                ) {
+                    Text(
+                        text = Strings.SAVE,
+                        fontSize = Dimens.fontSizeLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Dimens.spacingXXXLarge))
+            }
         }
     }
 }
@@ -221,7 +249,7 @@ private fun LinkRow(
 fun SettingsScreenPreview() {
     SettingsScreen(
         selectedColor = SheepColor.WHITE,
-        onColorSelected = {},
+        onSaveColor = {},
         onPrivacyPolicyClick = {},
         onTermsOfServiceClick = {},
         onBuyCoffeeClick = {},

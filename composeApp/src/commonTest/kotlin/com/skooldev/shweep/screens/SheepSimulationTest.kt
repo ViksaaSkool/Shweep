@@ -154,11 +154,11 @@ class SheepSimulationTest {
     fun driftingSheepMoveOffScreenWithoutBounce() {
         val driftingLeft = SheepItem(
             id = 0, x = 100f, y = 1000f, vx = 0f, vy = 200f,
-            isDriftingAway = true, driftSpeedX = -500f
+            motionState = SheepMotionState.DRIFTING, driftSpeedX = -500f
         )
         val driftingRight = SheepItem(
             id = 1, x = 700f, y = 1000f, vx = 0f, vy = 200f,
-            isDriftingAway = true, driftSpeedX = 500f
+            motionState = SheepMotionState.DRIFTING, driftSpeedX = 500f
         )
         val result = step(listOf(driftingLeft, driftingRight), deltaSeconds = 1f)
 
@@ -173,7 +173,7 @@ class SheepSimulationTest {
         val active = SheepItem(id = 0, x = 100f, y = 1000f, vx = 400f, vy = 0f, lifetimeSeconds = 999f)
         val drifting = SheepItem(
             id = 1, x = 180f, y = 1000f, vx = -400f, vy = 0f,
-            isDriftingAway = true, driftSpeedX = -500f
+            motionState = SheepMotionState.DRIFTING, driftSpeedX = -500f
         )
         val result = step(listOf(active, drifting), deltaSeconds = 1f / 60f)
 
@@ -191,7 +191,7 @@ class SheepSimulationTest {
         var current = listOf(sheep)
         repeat(20) { current = step(current, deltaSeconds = 0.05f) }
 
-        assertTrue(current[0].isDriftingAway, "sheep should be drifting after lifetime expires")
+        assertEquals(SheepMotionState.DRIFTING, current[0].motionState, "sheep should be drifting after lifetime expires")
         assertTrue(current[0].driftSpeedX != 0f, "drift speed should be assigned")
     }
 
@@ -204,7 +204,7 @@ class SheepSimulationTest {
         var current = listOf(sheep)
         repeat(2) { current = step(current, deltaSeconds = 0.05f) }
 
-        assertFalse(current[0].isDriftingAway, "sheep should still be active")
+        assertEquals(SheepMotionState.ACTIVE, current[0].motionState, "sheep should still be active")
         assertEquals(0.1f, current[0].ageSeconds, absoluteTolerance = 0.001f)
     }
 
@@ -258,7 +258,7 @@ class SheepSimulationTest {
         val sheep = SheepItem(id = 0, x = 100f, y = 1000f, vx = 200f, vy = 0f)
         val result = startDrifting(sheep, screenWidth, baseSizePx)
 
-        assertTrue(result.isDriftingAway)
+        assertEquals(SheepMotionState.DRIFTING, result.motionState)
         assertTrue(result.driftSpeedX < 0f, "should drift left")
     }
 
@@ -267,7 +267,7 @@ class SheepSimulationTest {
         val sheep = SheepItem(id = 0, x = 700f, y = 1000f, vx = -200f, vy = 0f)
         val result = startDrifting(sheep, screenWidth, baseSizePx)
 
-        assertTrue(result.isDriftingAway)
+        assertEquals(SheepMotionState.DRIFTING, result.motionState)
         assertTrue(result.driftSpeedX > 0f, "should drift right")
     }
 

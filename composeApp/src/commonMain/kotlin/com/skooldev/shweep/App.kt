@@ -2,6 +2,8 @@ package com.skooldev.shweep
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import com.skooldev.shweep.data.SessionRepositoryImpl
@@ -22,6 +24,8 @@ enum class Screen {
     Settings
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
+@Suppress("DEPRECATION")
 @Composable
 fun App() {
     MaterialTheme {
@@ -60,8 +64,9 @@ fun App() {
             Screen.Settings -> {
                 SettingsScreen(
                     selectedColor = selectedColor,
-                    onColorSelected = { color ->
+                    onSaveColor = { color ->
                         scope.launch { settingsRepository.setSheepColor(color) }
+                        currentScreen = Screen.Start
                     },
                     onPrivacyPolicyClick = {
                         uriHandler.openUri(AppLinks.PRIVACY_POLICY)
@@ -82,6 +87,10 @@ fun App() {
                 onDismiss = { showHistoryDialog = false },
                 sessionRepository = sessionRepository
             )
+        }
+
+        BackHandler(enabled = currentScreen == Screen.Settings) {
+            currentScreen = Screen.Start
         }
 
         if (!hasChosenSheepColor) {

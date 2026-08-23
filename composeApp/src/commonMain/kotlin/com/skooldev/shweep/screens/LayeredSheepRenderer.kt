@@ -69,45 +69,56 @@ internal fun rememberBlackSheepRigImages(): SheepRigImages = SheepRigImages(
 @Composable
 internal fun LayeredSheepCanvas(
     sheepList: List<SheepItem>,
+    draggedSheep: SheepItem? = null,
     sheepBaseSizePx: Float,
     frameCounter: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val whiteImages = rememberWhiteSheepRigImages()
-    val hasBlackSheep = sheepList.any { it.artwork == SheepArtwork.BLACK }
+    val hasBlackSheep = sheepList.any { it.artwork == SheepArtwork.BLACK } || draggedSheep?.artwork == SheepArtwork.BLACK
     val blackImages = if (hasBlackSheep) rememberBlackSheepRigImages() else null
 
     Canvas(modifier = modifier) {
         for (sheep in sheepList) {
-            val images = when (sheep.artwork) {
-                SheepArtwork.WHITE -> whiteImages
-                SheepArtwork.BLACK -> blackImages ?: continue
-            }
-
-            val pose = SheepGait.pose(
-                phaseRadians = sheep.gaitPhaseRadians,
-                speedPxPerSecond = SheepGait.speed(sheep.vx, sheep.vy)
-            )
-
-            // Maps source artwork units to current on-screen pixels.
-            val unitScale = sheepBaseSizePx / 1024f
-
-            withTransform({
-                translate(left = sheep.x, top = sheep.y + pose.bodyBobSourceUnits * unitScale)
-                scale(unitScale, unitScale, pivot = Offset.Zero)
-            }) {
-                for (slot in SHEEP_RIG_GEOMETRY.legDrawOrder) {
-                    drawLeg(images[slot], SHEEP_RIG_GEOMETRY[slot], pose.angleFor(slot))
-                }
-                drawImage(
-                    image = images.body,
-                    dstOffset = IntOffset(
-                        SHEEP_RIG_GEOMETRY.body.bitmapOffsetX.roundToInt(),
-                        SHEEP_RIG_GEOMETRY.body.bitmapOffsetY.roundToInt()
-                    )
-                )
-            }
+            drawSheep(sheep, sheepBaseSizePx, whiteImages, blackImages)
         }
+
+        draggedSheep?.let { drawSheep(it, sheepBaseSizePx, whiteImages, blackImages) }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSheep(
+    sheep: SheepItem,
+    sheepBaseSizePx: Float,
+    whiteImages: SheepRigImages,
+    blackImages: SheepRigImages?
+) {
+    val images = when (sheep.artwork) {
+        SheepArtwork.WHITE -> whiteImages
+        SheepArtwork.BLACK -> blackImages ?: return
+    }
+
+    val pose = SheepGait.pose(
+        phaseRadians = sheep.gaitPhaseRadians,
+        speedPxPerSecond = SheepGait.speed(sheep.vx, sheep.vy)
+    )
+
+    val unitScale = sheepBaseSizePx / 1024f
+
+    withTransform({
+        translate(left = sheep.x, top = sheep.y + pose.bodyBobSourceUnits * unitScale)
+        scale(unitScale, unitScale, pivot = Offset.Zero)
+    }) {
+        for (slot in SHEEP_RIG_GEOMETRY.legDrawOrder) {
+            drawLeg(images[slot], SHEEP_RIG_GEOMETRY[slot], pose.angleFor(slot))
+        }
+        drawImage(
+            image = images.body,
+            dstOffset = IntOffset(
+                SHEEP_RIG_GEOMETRY.body.bitmapOffsetX.roundToInt(),
+                SHEEP_RIG_GEOMETRY.body.bitmapOffsetY.roundToInt()
+            )
+        )
     }
 }
 

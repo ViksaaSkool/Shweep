@@ -10,8 +10,6 @@ object Strings {
     const val BUTTON_HISTORY = "History"
     
     // Counting Sheep Screen
-    const val TIME_FORMAT = "Time: %s"
-    const val SHEEP_COUNT_DISPLAY = "Sheep: %d"
     const val SWIPE_UP = "Swipe up"
     const val CD_COUNTING_BACKGROUND = "Night landscape background with mountains and moon"
     
@@ -41,6 +39,7 @@ object Strings {
     const val BUY_DEVELOPER_COFFEE = "Buy the developer a coffee"
     const val LINK_OPENS_IN_BROWSER = "Opens in your browser"
     const val CD_GEAR = "Settings"
+    const val SAVE = "Save"
 
     // Sheep Color Dialog
     const val CHOOSE_SHEEP_TITLE = "Choose your sheep"
