@@ -16,6 +16,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_start
+import shweep.composeapp.generated.resources.background_start_black
+import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
@@ -24,14 +26,21 @@ import com.skooldev.shweep.ui.theme.Strings
 fun StartScreen(
     onGoToSleepClick: () -> Unit,
     onHistoryClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    sheepColor: SheepColor = SheepColor.WHITE
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
         // Background image with sheep and landscape
         Image(
-            painter = painterResource(Res.drawable.background_start),
+            painter = painterResource(
+                if (sheepColor == SheepColor.BLACK) {
+                    Res.drawable.background_start_black
+                } else {
+                    Res.drawable.background_start
+                }
+            ),
             contentDescription = Strings.CD_BACKGROUND_IMAGE,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -167,6 +176,7 @@ fun StartScreenPreview() {
     StartScreen(
         onGoToSleepClick = {},
         onHistoryClick = {},
-        onSettingsClick = {}
+        onSettingsClick = {},
+        sheepColor = SheepColor.WHITE
     )
 }

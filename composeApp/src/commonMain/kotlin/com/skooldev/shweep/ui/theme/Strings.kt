@@ -41,4 +41,8 @@ object Strings {
     const val BUY_DEVELOPER_COFFEE = "Buy the developer a coffee"
     const val LINK_OPENS_IN_BROWSER = "Opens in your browser"
     const val CD_GEAR = "Settings"
+
+    // Sheep Color Dialog
+    const val CHOOSE_SHEEP_TITLE = "Choose your sheep"
+    const val CHOOSE_SHEEP_CONTINUE = "Continue"
 }

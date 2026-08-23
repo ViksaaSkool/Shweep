@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.DrawableResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_start
 import shweep.composeapp.generated.resources.black_sheep
@@ -177,62 +176,6 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(Dimens.spacingXXXLarge))
-        }
-    }
-}
-
-@Composable
-private fun SheepColorOption(
-    label: String,
-    imageRes: DrawableResource,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(Dimens.cardCornerRadiusSmall))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(Dimens.cardCornerRadiusSmall),
-        color = if (selected) {
-            AppColors.Primary.copy(alpha = 0.4f)
-        } else {
-            AppColors.ButtonBackgroundAlpha
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimens.paddingLarge),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(imageRes),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                contentScale = ContentScale.Fit
-            )
-
-            Spacer(modifier = Modifier.width(Dimens.spacingLarge))
-
-            Text(
-                text = label,
-                fontSize = Dimens.fontSizeLarge,
-                fontWeight = FontWeight.Medium,
-                color = AppColors.TextPrimary,
-                modifier = Modifier.weight(1f)
-            )
-
-            if (selected) {
-                RadioButton(
-                    selected = true,
-                    onClick = null,
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = AppColors.TextPrimary,
-                        unselectedColor = AppColors.TextPrimary.copy(alpha = 0.5f)
-                    )
-                )
-            }
         }
     }
 }

@@ -13,6 +13,7 @@ import com.skooldev.shweep.screens.StartScreen
 import com.skooldev.shweep.screens.CountingSheepScreen
 import com.skooldev.shweep.screens.HistoryDialog
 import com.skooldev.shweep.screens.SettingsScreen
+import com.skooldev.shweep.screens.SheepColorDialog
 import kotlinx.coroutines.launch
 
 enum class Screen {
@@ -34,6 +35,9 @@ fun App() {
         val selectedColor by settingsRepository.sheepColor.collectAsState(
             initial = SheepColor.WHITE
         )
+        val hasChosenSheepColor by settingsRepository.hasChosenSheepColor.collectAsState(
+            initial = true
+        )
         val scope = rememberCoroutineScope()
         val uriHandler = LocalUriHandler.current
 
@@ -42,7 +46,8 @@ fun App() {
                 StartScreen(
                     onGoToSleepClick = { currentScreen = Screen.Counting },
                     onHistoryClick = { showHistoryDialog = true },
-                    onSettingsClick = { currentScreen = Screen.Settings }
+                    onSettingsClick = { currentScreen = Screen.Settings },
+                    sheepColor = selectedColor
                 )
             }
             Screen.Counting -> {
@@ -76,6 +81,18 @@ fun App() {
             HistoryDialog(
                 onDismiss = { showHistoryDialog = false },
                 sessionRepository = sessionRepository
+            )
+        }
+
+        if (!hasChosenSheepColor) {
+            SheepColorDialog(
+                selectedColor = selectedColor,
+                onConfirm = { color ->
+                    scope.launch {
+                        settingsRepository.setSheepColor(color)
+                        settingsRepository.markSheepColorChosen()
+                    }
+                }
             )
         }
     }
