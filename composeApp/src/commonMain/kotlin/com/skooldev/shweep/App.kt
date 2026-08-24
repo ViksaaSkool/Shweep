@@ -6,6 +6,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
+import com.skooldev.shweep.data.DailySheepQuotaRepositoryImpl
 import com.skooldev.shweep.data.SessionRepositoryImpl
 import com.skooldev.shweep.data.SettingsRepositoryImpl
 import com.skooldev.shweep.data.SheepColor
@@ -36,6 +37,7 @@ fun App() {
         val dataStore = remember { createDataStore() }
         val sessionRepository = remember(dataStore) { SessionRepositoryImpl(dataStore) }
         val settingsRepository = remember(dataStore) { SettingsRepositoryImpl(dataStore) }
+        val dailySheepQuotaRepository = remember(dataStore) { DailySheepQuotaRepositoryImpl(dataStore) }
 
         val selectedColor by settingsRepository.sheepColor.collectAsState(
             initial = SheepColor.WHITE
@@ -59,6 +61,7 @@ fun App() {
                 CountingSheepScreen(
                     onBackClick = { currentScreen = Screen.Start },
                     sessionRepository = sessionRepository,
+                    dailySheepQuotaRepository = dailySheepQuotaRepository,
                     sheepArtwork = selectedColor.toArtwork()
                 )
             }

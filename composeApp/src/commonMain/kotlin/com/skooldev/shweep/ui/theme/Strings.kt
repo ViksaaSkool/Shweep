@@ -46,4 +46,11 @@ object Strings {
     // Sheep Color Dialog
     const val CHOOSE_SHEEP_TITLE = "Choose your sheep"
     const val CHOOSE_SHEEP_CONTINUE = "Continue"
+
+    // Out of Sheep Dialog
+    const val OUT_OF_SHEEP_TITLE = "No sheep left today"
+    const val OUT_OF_SHEEP_MESSAGE = "You have used all of today's sheep. Your allowance resets at local noon."
+    const val OUT_OF_SHEEP_TIMER_LABEL = "until more sheep arrive"
+    const val UNLIMITED_SHEEP_COMING_SOON = "Unlimited sheep - Coming soon"
+    const val WAIT_UNTIL_RESET = "Wait until reset"
 }
