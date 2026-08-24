@@ -38,6 +38,7 @@ fun SettingsScreen(
     onSaveColor: (SheepColor) -> Unit,
     onPrivacyPolicyClick: () -> Unit,
     onTermsOfServiceClick: () -> Unit,
+    onInviteFriendsClick: () -> Unit,
     onBuyCoffeeClick: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -166,6 +167,25 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
 
             Button(
+                onClick = onInviteFriendsClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Dimens.buttonHeight),
+                shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.Primary
+                )
+            ) {
+                Text(
+                    text = Strings.INVITE_FRIENDS,
+                    fontSize = Dimens.fontSizeLarge,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
+
+            Button(
                 onClick = onBuyCoffeeClick,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -252,6 +272,7 @@ fun SettingsScreenPreview() {
         onSaveColor = {},
         onPrivacyPolicyClick = {},
         onTermsOfServiceClick = {},
+        onInviteFriendsClick = {},
         onBuyCoffeeClick = {},
         onBack = {}
     )

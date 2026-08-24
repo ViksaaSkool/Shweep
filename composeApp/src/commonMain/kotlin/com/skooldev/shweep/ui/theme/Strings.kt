@@ -40,6 +40,8 @@ object Strings {
     const val LINK_OPENS_IN_BROWSER = "Opens in your browser"
     const val CD_GEAR = "Settings"
     const val SAVE = "Save"
+    const val INVITE_FRIENDS = "Invite friends"
+    const val SHARE_SHWEEP = "Share Shweep"
 
     // Sheep Color Dialog
     const val CHOOSE_SHEEP_TITLE = "Choose your sheep"

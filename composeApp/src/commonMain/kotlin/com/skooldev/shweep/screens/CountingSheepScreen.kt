@@ -151,12 +151,12 @@ fun CountingSheepScreen(
                         isUserInteracting = true
                         gestureMode = SheepGestureMode.PENDING
                         initialPointerY = offset.y
-                        initialEventTimeMillis = System.currentTimeMillis()
+                        initialEventTimeMillis = Clock.System.now().toEpochMilliseconds()
                         totalDragY = 0f
                         draggedSheep = null
                         velocityTracker.resetTracking()
                         velocityTracker.addPosition(
-                            timeMillis = System.currentTimeMillis(),
+                            timeMillis = Clock.System.now().toEpochMilliseconds(),
                             position = offset
                         )
                     },
@@ -170,7 +170,7 @@ fun CountingSheepScreen(
 
                         if (gestureMode == SheepGestureMode.PENDING) {
                             val currentUpwardDistance = maxOf(0f, initialPointerY - change.position.y)
-                            val elapsedMillis = System.currentTimeMillis() - initialEventTimeMillis
+                            val elapsedMillis = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
                             val isUpward = totalDragY < 0f
 
                             if (isUpward && currentUpwardDistance >= dragActivationDistancePx) {
@@ -237,7 +237,7 @@ fun CountingSheepScreen(
                                 if (isUpwardSwipe) {
                                     val velocity = velocityTracker.calculateVelocity()
                                     val releaseUpwardSpeed = -velocity.y
-                                    val averageUpwardSpeed = maxOf(0f, -totalDragY / maxOf(0.001f, (System.currentTimeMillis() - initialEventTimeMillis) / 1000f))
+                                    val averageUpwardSpeed = maxOf(0f, -totalDragY / maxOf(0.001f, (Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis) / 1000f))
                                     val effectiveUpwardSpeed = maxOf(averageUpwardSpeed, releaseUpwardSpeed)
 
                                     if (effectiveUpwardSpeed >= slowGestureThresholdPxPerSecond) {

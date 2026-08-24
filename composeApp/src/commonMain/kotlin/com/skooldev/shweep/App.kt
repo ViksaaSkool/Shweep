@@ -16,6 +16,7 @@ import com.skooldev.shweep.screens.CountingSheepScreen
 import com.skooldev.shweep.screens.HistoryDialog
 import com.skooldev.shweep.screens.SettingsScreen
 import com.skooldev.shweep.screens.SheepColorDialog
+import com.skooldev.shweep.ui.theme.Strings
 import kotlinx.coroutines.launch
 
 enum class Screen {
@@ -73,6 +74,9 @@ fun App() {
                     },
                     onTermsOfServiceClick = {
                         uriHandler.openUri(AppLinks.TERMS_OF_SERVICE)
+                    },
+                    onInviteFriendsClick = {
+                        shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
                     onBuyCoffeeClick = {
                         uriHandler.openUri(AppLinks.BUY_ME_A_COFFEE)
