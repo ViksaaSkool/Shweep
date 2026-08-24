@@ -53,4 +53,15 @@ object Dimens {
     
     // Line Heights
     val lineHeightMedium = 24.sp
+
+    // History
+    val historyContentMaxWidth = 720.dp
+    val historySummaryPadding = 24.dp
+    val historySessionPadding = 20.dp
+    val historyMetricGraphicSize = 72.dp
+    val historySheepIconSize = 28.dp
+    val historyFlockWidth = 112.dp
+    val historyFlockHeight = 64.dp
+    val historyCardSpacing = 16.dp
+    val historyDurationArcWidth = 5.dp
 }

@@ -8,21 +8,33 @@ class MockSessionRepository : SessionRepository {
         listOf(
             Session(
                 id = "1",
-                startTime = 1704067200000,
-                endTime = 1704070800000,
-                sheepCount = 42
+                startTime = 1704067200000L,
+                endTime = 1704067200000L + 14 * 60_000L,
+                sheepCount = 18
             ),
             Session(
                 id = "2",
-                startTime = 1704153600000,
-                endTime = 1704157200000,
+                startTime = 1704153600000L,
+                endTime = 1704153600000L + 27 * 60_000L,
                 sheepCount = 35
             ),
             Session(
                 id = "3",
-                startTime = 1704240000000,
-                endTime = 1704243600000,
-                sheepCount = 28
+                startTime = 1704240000000L,
+                endTime = 1704240000000L + 48 * 60_000L,
+                sheepCount = 62
+            ),
+            Session(
+                id = "4",
+                startTime = 1704326400000L,
+                endTime = 1704326400000L + 45_000L,
+                sheepCount = 2
+            ),
+            Session(
+                id = "5",
+                startTime = 1704412800000L,
+                endTime = 1704412800000L + 72 * 60_000L,
+                sheepCount = 74
             )
         )
     )

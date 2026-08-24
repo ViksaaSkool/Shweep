@@ -17,7 +17,7 @@ import com.skooldev.shweep.purchase.MockStorePurchaseGateway
 import com.skooldev.shweep.purchase.StorePurchaseGateway
 import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseManager
 import com.skooldev.shweep.screens.CountingSheepScreen
-import com.skooldev.shweep.screens.HistoryDialog
+import com.skooldev.shweep.screens.HistoryScreen
 import com.skooldev.shweep.screens.SettingsScreen
 import com.skooldev.shweep.screens.SheepColorDialog
 import com.skooldev.shweep.screens.StartScreen
@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 enum class Screen {
     Start,
     Counting,
+    History,
     Settings
 }
 
@@ -39,7 +40,6 @@ fun App(
     MaterialTheme {
         val limitedSheepEnabled = FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED
         var currentScreen by remember { mutableStateOf(Screen.Start) }
-        var showHistoryDialog by remember { mutableStateOf(false) }
 
         val dataStore = remember { createDataStore() }
         val sessionRepository = remember(dataStore) { SessionRepositoryImpl(dataStore) }
@@ -82,7 +82,7 @@ fun App(
             Screen.Start -> {
                 StartScreen(
                     onGoToSleepClick = { currentScreen = Screen.Counting },
-                    onHistoryClick = { showHistoryDialog = true },
+                    onHistoryClick = { currentScreen = Screen.History },
                     onSettingsClick = { currentScreen = Screen.Settings },
                     sheepColor = selectedColor
                 )
@@ -97,6 +97,12 @@ fun App(
                     onPurchase = { purchaseManager.purchase() },
                     onRestore = { purchaseManager.restore() },
                     sheepArtwork = selectedColor.toArtwork()
+                )
+            }
+            Screen.History -> {
+                HistoryScreen(
+                    sessionRepository = sessionRepository,
+                    onBack = { currentScreen = Screen.Start }
                 )
             }
             Screen.Settings -> {
@@ -127,14 +133,7 @@ fun App(
             }
         }
 
-        if (showHistoryDialog) {
-            HistoryDialog(
-                onDismiss = { showHistoryDialog = false },
-                sessionRepository = sessionRepository
-            )
-        }
-
-        BackHandler(enabled = currentScreen == Screen.Settings || currentScreen == Screen.Counting) {
+        BackHandler(enabled = currentScreen == Screen.Settings || currentScreen == Screen.Counting || currentScreen == Screen.History) {
             currentScreen = Screen.Start
         }
 

@@ -7,14 +7,14 @@ object Strings {
     // Start Screen
     const val START_TAGLINE = "Use tech to go to sleep\nlike your ancestors"
     const val BUTTON_GO_TO_SLEEP = "Go to sleep"
-    const val BUTTON_HISTORY = "History"
+    const val BUTTON_HISTORY = "Sleepstory"
     
     // Counting Sheep Screen
     const val SWIPE_UP = "Swipe up"
     const val CD_COUNTING_BACKGROUND = "Night landscape background with mountains and moon"
     
     // History Dialog
-    const val HISTORY_TITLE = "History"
+    const val HISTORY_TITLE = "Sleepstory"
     const val HISTORY_CLOSE = "✕"
     const val SHEEP_COUNT_FORMAT = "No of sheep: %d"
     
@@ -67,4 +67,18 @@ object Strings {
     const val UNLIMITED_SHEEP_UNAVAILABLE = "Purchase unavailable"
     const val UNLIMITED_SHEEP_NOT_FOUND = "No purchase found for this store account"
     const val UNLIMITED_SHEEP_CONNECT = "Connect to the internet to check your purchase"
+
+    // History
+    const val HISTORY_SUMMARY_TITLE = "Average time to sleep"
+    const val HISTORY_ESTIMATE_NOTE = "Estimated from the time spent counting sheep"
+    const val HISTORY_RECENT_NIGHTS = "Recent nights"
+    const val HISTORY_TOTAL_NIGHTS = "%d nights"
+    const val HISTORY_AVERAGE_SHEEP = "%d avg sheep"
+    const val HISTORY_TIME_TO_SLEEP = "Time to sleep"
+    const val HISTORY_SHEEP_COUNTED = "Sheep counted"
+    const val HISTORY_STARTED_AT = "Started %s"
+    const val HISTORY_DURATION_NOT_AVAILABLE = "Not available"
+    const val HISTORY_EMPTY_TITLE = "No nights recorded yet"
+    const val HISTORY_EMPTY_MESSAGE = "Complete a sheep-counting session and your sleep journey will appear here."
+    const val HISTORY_SHEEP_COUNT = "%d sheep"
 }

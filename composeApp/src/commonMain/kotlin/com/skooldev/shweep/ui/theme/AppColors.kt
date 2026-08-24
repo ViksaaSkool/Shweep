@@ -25,4 +25,10 @@ object AppColors {
     val CardBackgroundLowAlpha = Color(0xFF4A3B69).copy(alpha = 0.6f)
     val ButtonBackgroundAlpha = Color(0xFF5A4A79).copy(alpha = 0.5f)
     val TitlePillAlpha = Color(0xFF6B5B95).copy(alpha = 0.6f)
+
+    // History
+    val MoonGlow = Color(0xFFF4D2B8)
+    val HistoryDurationArc = Color(0xFFC9B8E8)
+    val HistoryTrack = Color.White.copy(alpha = 0.14f)
+    val HistoryDivider = Color.White.copy(alpha = 0.16f)
 }
