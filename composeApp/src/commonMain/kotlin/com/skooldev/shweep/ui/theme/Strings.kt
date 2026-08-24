@@ -53,4 +53,18 @@ object Strings {
     const val OUT_OF_SHEEP_TIMER_LABEL = "until more sheep arrive"
     const val UNLIMITED_SHEEP_COMING_SOON = "Unlimited sheep - Coming soon"
     const val WAIT_UNTIL_RESET = "Wait until reset"
+
+    // Unlimited Sheep Purchase
+    const val UNLIMITED_SHEEP_TITLE = "Unlimited Sheep"
+    const val UNLIMITED_SHEEP_PURCHASE_TITLE = "Buy Unlimited Sheep"
+    const val UNLIMITED_SHEEP_DESCRIPTION = "One-time purchase"
+    const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "Removes the daily sheep limit on this platform. Restorable with the same store account."
+    const val UNLIMITED_SHEEP_ACTIVE = "Active on this platform"
+    const val UNLIMITED_SHEEP_PURCHASE_LOADING = "Loading purchase..."
+    const val UNLIMITED_SHEEP_PURCHASING = "Purchasing..."
+    const val UNLIMITED_SHEEP_RESTORING = "Restoring..."
+    const val UNLIMITED_SHEEP_PENDING = "Purchase pending"
+    const val UNLIMITED_SHEEP_UNAVAILABLE = "Purchase unavailable"
+    const val UNLIMITED_SHEEP_NOT_FOUND = "No purchase found for this store account"
+    const val UNLIMITED_SHEEP_CONNECT = "Connect to the internet to check your purchase"
 }

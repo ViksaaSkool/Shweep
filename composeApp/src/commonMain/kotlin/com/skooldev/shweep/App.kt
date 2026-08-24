@@ -12,11 +12,15 @@ import com.skooldev.shweep.data.SettingsRepositoryImpl
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.data.createDataStore
 import com.skooldev.shweep.data.toArtwork
-import com.skooldev.shweep.screens.StartScreen
+import com.skooldev.shweep.purchase.DisabledStorePurchaseGateway
+import com.skooldev.shweep.purchase.MockStorePurchaseGateway
+import com.skooldev.shweep.purchase.StorePurchaseGateway
+import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseManager
 import com.skooldev.shweep.screens.CountingSheepScreen
 import com.skooldev.shweep.screens.HistoryDialog
 import com.skooldev.shweep.screens.SettingsScreen
 import com.skooldev.shweep.screens.SheepColorDialog
+import com.skooldev.shweep.screens.StartScreen
 import com.skooldev.shweep.ui.theme.Strings
 import kotlinx.coroutines.launch
 
@@ -29,8 +33,11 @@ enum class Screen {
 @OptIn(ExperimentalComposeUiApi::class)
 @Suppress("DEPRECATION")
 @Composable
-fun App() {
+fun App(
+    purchaseGateway: StorePurchaseGateway
+) {
     MaterialTheme {
+        val limitedSheepEnabled = FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED
         var currentScreen by remember { mutableStateOf(Screen.Start) }
         var showHistoryDialog by remember { mutableStateOf(false) }
 
@@ -39,14 +46,37 @@ fun App() {
         val settingsRepository = remember(dataStore) { SettingsRepositoryImpl(dataStore) }
         val dailySheepQuotaRepository = remember(dataStore) { DailySheepQuotaRepositoryImpl(dataStore) }
 
+        val effectiveGateway = if (limitedSheepEnabled) purchaseGateway else DisabledStorePurchaseGateway()
+        val purchaseManager = remember(effectiveGateway) {
+            UnlimitedSheepPurchaseManager(effectiveGateway)
+        }
+        val purchaseState by purchaseManager.state.collectAsState()
+        val scope = rememberCoroutineScope()
+        val uriHandler = LocalUriHandler.current
+
+        DisposableEffect(purchaseManager, limitedSheepEnabled) {
+            if (limitedSheepEnabled) {
+                purchaseManager.start()
+            }
+            onDispose {
+                if (limitedSheepEnabled) {
+                    purchaseManager.stop()
+                }
+            }
+        }
+
+        LaunchedEffect(limitedSheepEnabled, purchaseState.isPurchased) {
+            if (!limitedSheepEnabled || purchaseState.isPurchased) {
+                // Clear any stale exhausted state when feature is off or user buys
+            }
+        }
+
         val selectedColor by settingsRepository.sheepColor.collectAsState(
             initial = SheepColor.WHITE
         )
         val hasChosenSheepColor by settingsRepository.hasChosenSheepColor.collectAsState(
             initial = true
         )
-        val scope = rememberCoroutineScope()
-        val uriHandler = LocalUriHandler.current
 
         when (currentScreen) {
             Screen.Start -> {
@@ -62,6 +92,10 @@ fun App() {
                     onBackClick = { currentScreen = Screen.Start },
                     sessionRepository = sessionRepository,
                     dailySheepQuotaRepository = dailySheepQuotaRepository,
+                    limitedSheepEnabled = limitedSheepEnabled,
+                    purchaseState = purchaseState,
+                    onPurchase = { purchaseManager.purchase() },
+                    onRestore = { purchaseManager.restore() },
                     sheepArtwork = selectedColor.toArtwork()
                 )
             }
@@ -84,6 +118,10 @@ fun App() {
                     onBuyCoffeeClick = {
                         uriHandler.openUri(AppLinks.BUY_ME_A_COFFEE)
                     },
+                    onBuyUnlimited = { purchaseManager.purchase() },
+                    onRestorePurchases = { purchaseManager.restore() },
+                    limitedSheepEnabled = limitedSheepEnabled,
+                    purchaseState = purchaseState,
                     onBack = { currentScreen = Screen.Start }
                 )
             }
@@ -118,6 +156,6 @@ fun App() {
 @Composable
 fun AppPreview() {
     MaterialTheme {
-        App()
+        App(purchaseGateway = MockStorePurchaseGateway())
     }
 }
