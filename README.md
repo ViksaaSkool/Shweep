@@ -24,6 +24,36 @@ The app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
 For implementation switch branches and go to `develop_opencode_kimi` branch to see the vibe engineering details 
 with the help of OpenCode and Kimi 2.5 or click [here](https://github.com/ViksaaSkool/Shweep/tree/develop_opencode_kimi).
 
+# Repository layout
+
+This repository ships two deliverables that must stay separated:
+
+| Path | Purpose | Ships where |
+|------|---------|-------------|
+| `composeApp/src/**` | KMP app code and packaged resources | Android / iOS app |
+| `iosApp/iosApp/**` | iOS app sources and assets | iOS app |
+| `docs/**` | GitHub Pages website (pages, video, poster) | GitHub Pages only |
+| `art/background/**` | Website animation source layers | GitHub only (not published) |
+| `tools/**` | Repo tooling (renderer, asset guard) | GitHub only |
+
+Website files (`.html`, `.css`, `.mp4`, `.webm`, `landing-*`) must never appear
+inside the app source sets or a packaged app bundle.
+
+Guards:
+
+- `tools/web_asset_guard.py check-source` fails if website assets are found in
+  app source sets.
+- `tools/web_asset_guard.py check-archive <apk/aab/.app>` fails if website
+  assets are found inside a built artifact.
+- `.github/workflows/web-asset-boundary.yml` runs both on GitHub.
+
+Regenerating the landing background video:
+
+```sh
+python3 tools/render_background_frames.py
+# then re-encode with ffmpeg (see script header)
+```
+
 # License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details. 
