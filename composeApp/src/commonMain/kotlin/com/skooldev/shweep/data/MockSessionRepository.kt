@@ -1,6 +1,7 @@
 package com.skooldev.shweep.data
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 class MockSessionRepository : SessionRepository {
@@ -39,19 +40,47 @@ class MockSessionRepository : SessionRepository {
         )
     )
 
-    override suspend fun addSession(session: Session) {
+    private var activeCheckpoint: ActiveSessionCheckpoint? = null
+
+    override suspend fun addSession(session: Session) {}
+
+    override suspend fun clearAllSessions() {}
+
+    override suspend fun saveActiveCheckpoint(checkpoint: ActiveSessionCheckpoint) {
+        activeCheckpoint = checkpoint
     }
 
-    override suspend fun clearAllSessions() {
+    override suspend fun loadActiveCheckpoint(): ActiveSessionCheckpoint? = activeCheckpoint
+
+    override suspend fun clearActiveCheckpoint() {
+        activeCheckpoint = null
+    }
+
+    override suspend fun completeActiveSession(endTime: Long, endReason: SessionEndReason) {
+        activeCheckpoint = null
     }
 }
 
 class EmptySessionRepository : SessionRepository {
     override val sessions: Flow<List<Session>> = flowOf(emptyList())
 
-    override suspend fun addSession(session: Session) {
+    private var activeCheckpoint: ActiveSessionCheckpoint? = null
+
+    override suspend fun addSession(session: Session) {}
+
+    override suspend fun clearAllSessions() {}
+
+    override suspend fun saveActiveCheckpoint(checkpoint: ActiveSessionCheckpoint) {
+        activeCheckpoint = checkpoint
     }
 
-    override suspend fun clearAllSessions() {
+    override suspend fun loadActiveCheckpoint(): ActiveSessionCheckpoint? = activeCheckpoint
+
+    override suspend fun clearActiveCheckpoint() {
+        activeCheckpoint = null
+    }
+
+    override suspend fun completeActiveSession(endTime: Long, endReason: SessionEndReason) {
+        activeCheckpoint = null
     }
 }

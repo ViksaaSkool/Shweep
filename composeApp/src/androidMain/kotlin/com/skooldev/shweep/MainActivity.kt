@@ -20,7 +20,10 @@ class MainActivity : ComponentActivity() {
         purchaseGateway = AndroidStorePurchaseGateway(this)
 
         setContent {
-            App(purchaseGateway = purchaseGateway)
+            App(
+                purchaseGateway = purchaseGateway,
+                visibilityMonitor = AndroidAppVisibilityMonitor()
+            )
         }
     }
 
@@ -38,5 +41,8 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App(purchaseGateway = MockStorePurchaseGateway())
+    App(
+        purchaseGateway = MockStorePurchaseGateway(),
+        visibilityMonitor = AndroidAppVisibilityMonitor()
+    )
 }

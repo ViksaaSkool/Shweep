@@ -5,5 +5,8 @@ import com.skooldev.shweep.purchase.IosStorePurchaseGateway
 
 fun MainViewController() = ComposeUIViewController {
     val gateway = IosStorePurchaseGateway()
-    App(purchaseGateway = gateway)
+    App(
+        purchaseGateway = gateway,
+        visibilityMonitor = IosAppVisibilityMonitor()
+    )
 }

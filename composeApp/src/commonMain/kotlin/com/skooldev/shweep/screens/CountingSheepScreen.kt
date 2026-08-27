@@ -10,9 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
@@ -22,10 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.tooling.preview.Preview
+import com.skooldev.shweep.CountingSessionCoordinator
+import com.skooldev.shweep.MonotonicClock
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlin.math.abs
-import kotlin.math.max
 import kotlin.time.Clock
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
@@ -35,7 +35,6 @@ import com.skooldev.shweep.data.DailySheepQuota
 import com.skooldev.shweep.data.DailySheepQuotaRepository
 import com.skooldev.shweep.data.MockDailySheepQuotaRepository
 import com.skooldev.shweep.data.MockSessionRepository
-import com.skooldev.shweep.data.Session
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.data.SheepAccessMode
 import com.skooldev.shweep.data.resolveSheepAccessMode
@@ -46,8 +45,6 @@ import com.skooldev.shweep.ui.theme.Strings
 import kotlin.math.floor
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private const val MIN_UPWARD_DISTANCE_DP = 48f
 private const val DRAG_ACTIVATION_DISTANCE_DP = 16f
@@ -59,7 +56,7 @@ private enum class SheepGestureMode {
     DRAGGING
 }
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 @Composable
 fun CountingSheepScreen(
     onBackClick: () -> Unit,
@@ -69,12 +66,12 @@ fun CountingSheepScreen(
     purchaseState: UnlimitedSheepPurchaseState,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
-    sheepArtwork: SheepArtwork = SheepArtwork.WHITE
+    sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
+    coordinator: CountingSessionCoordinator
 ) {
     val accessMode = remember(limitedSheepEnabled, purchaseState.entitlement) {
         resolveSheepAccessMode(limitedSheepEnabled, purchaseState.entitlement)
     }
-    var isUserInteracting by remember { mutableStateOf(false) }
     var sheepCount by remember { mutableStateOf(0) }
     var screenSize by remember { mutableStateOf(Size.Zero) }
     var frameCounter by remember { mutableIntStateOf(0) }
@@ -89,10 +86,9 @@ fun CountingSheepScreen(
     var initialEventTimeMillis by remember { mutableLongStateOf(0L) }
     var totalDragY by remember { mutableFloatStateOf(0f) }
     val velocityTracker = remember { VelocityTracker() }
-
     var exhaustedQuota by remember { mutableStateOf<DailySheepQuota?>(null) }
 
-    val sessionStartTime: Long = remember { Clock.System.now().toEpochMilliseconds() }
+    val grayness by coordinator.grayness.collectAsState()
 
     val sheepBaseSize = 80.dp
     val sheepBaseSizePx = with(density) { sheepBaseSize.toPx() }
@@ -110,17 +106,73 @@ fun CountingSheepScreen(
         sheepBaseSizePx = sheepBaseSizePx
     )
 
-    DisposableEffect(Unit) {
-        onDispose {
-            runBlocking {
-                val endTime = Clock.System.now().toEpochMilliseconds()
-                val session = Session(
-                    id = Uuid.random().toString(),
-                    startTime = sessionStartTime,
-                    endTime = endTime,
-                    sheepCount = sheepCount
+    // grayness: 0f = colorful, 1f = grayscale. Compose saturation uses the
+    // opposite convention, so invert here at the rendering boundary.
+    val sceneColorMatrix = remember(grayness) {
+        ColorMatrix().apply { setToSaturation(1f - grayness) }
+    }
+
+    fun createSheep(
+        sample: GestureSample,
+        x: Float,
+        y: Float,
+        screenWidth: Float,
+        sheepBaseSizePx: Float,
+        elapsedMillis: Long
+    ) {
+        scope.launch {
+            if (accessMode == SheepAccessMode.UNLIMITED) {
+                val lifetime = randomLifetimeSeconds()
+                val turnInterval = randomTurnIntervalSeconds()
+                val newSheep = SheepItem(
+                    id = sheepCount,
+                    x = x.coerceIn(0f, screenWidth - sheepBaseSizePx),
+                    y = y,
+                    vx = (Random.nextFloat() - 0.5f) * 500f,
+                    vy = (Random.nextFloat() - 0.5f) * 500f,
+                    artwork = sheepArtwork,
+                    motionState = SheepMotionState.ACTIVE,
+                    ageSeconds = 0f,
+                    lifetimeSeconds = lifetime,
+                    nextZigzagTurnIn = turnInterval,
+                    zigzagTurnInterval = turnInterval,
+                    gaitPhaseRadians = initialGaitPhase(sheepCount)
                 )
-                sessionRepository.addSession(session)
+                val updatedSheep = makeRoomForNewSheep(sheepList.value, meadowCapacity, screenWidth, sheepBaseSizePx)
+                sheepList.value = updatedSheep + newSheep
+                sheepCount++
+                coordinator.recordSuccess(sample, elapsedMillis)
+                coordinator.incrementSheep()
+            } else {
+                when (val result = dailySheepQuotaRepository.tryConsumeSheep()) {
+                    is ConsumeSheepResult.Allowed -> {
+                        val lifetime = randomLifetimeSeconds()
+                        val turnInterval = randomTurnIntervalSeconds()
+                        val newSheep = SheepItem(
+                            id = sheepCount,
+                            x = x.coerceIn(0f, screenWidth - sheepBaseSizePx),
+                            y = y,
+                            vx = (Random.nextFloat() - 0.5f) * 500f,
+                            vy = (Random.nextFloat() - 0.5f) * 500f,
+                            artwork = sheepArtwork,
+                            motionState = SheepMotionState.ACTIVE,
+                            ageSeconds = 0f,
+                            lifetimeSeconds = lifetime,
+                            nextZigzagTurnIn = turnInterval,
+                            zigzagTurnInterval = turnInterval,
+                            gaitPhaseRadians = initialGaitPhase(sheepCount)
+                        )
+                        val updatedSheep = makeRoomForNewSheep(sheepList.value, meadowCapacity, screenWidth, sheepBaseSizePx)
+                        sheepList.value = updatedSheep + newSheep
+                        sheepCount++
+                        coordinator.recordSuccess(sample, elapsedMillis)
+                        coordinator.incrementSheep()
+                    }
+                    is ConsumeSheepResult.Exhausted -> {
+                        coordinator.recordAttempt(sample, elapsedMillis)
+                        exhaustedQuota = result.quota
+                    }
+                }
             }
         }
     }
@@ -130,16 +182,19 @@ fun CountingSheepScreen(
         while (true) {
             withFrameNanos { frameTimeNanos ->
                 if (lastFrameTimeNanos != 0L) {
-                    val deltaSeconds =
+                    val rawDeltaSeconds =
                         ((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000.0).toFloat()
-                            .coerceAtMost(SheepSimulation.MAX_DELTA_SECONDS)
+                    val physicsDeltaSeconds =
+                        rawDeltaSeconds.coerceAtMost(SheepSimulation.MAX_DELTA_SECONDS)
                     lastFrameTimeNanos = frameTimeNanos
                     frameCounter++
+
+                    coordinator.tick(MonotonicClock.nowMillis(), rawDeltaSeconds)
 
                     val screenWidth = screenSize.width
                     val screenHeight = screenSize.height
 
-                    if (screenWidth > 0 && screenHeight > 0 && deltaSeconds > 0f) {
+                    if (screenWidth > 0 && screenHeight > 0 && physicsDeltaSeconds > 0f) {
                         val playAreaStartY = screenHeight * 0.35f
 
                         val stepped = SheepSimulation.step(
@@ -148,7 +203,7 @@ fun CountingSheepScreen(
                             screenHeight = screenHeight,
                             playAreaStartY = playAreaStartY,
                             sheepBaseSizePx = sheepBaseSizePx,
-                            deltaSeconds = deltaSeconds
+                            deltaSeconds = physicsDeltaSeconds
                         )
 
                         sheepList.value = stepped.filter { shouldKeepSheep(it, screenWidth, screenHeight, playAreaStartY, sheepBaseSizePx) }
@@ -167,7 +222,6 @@ fun CountingSheepScreen(
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { offset ->
-                        isUserInteracting = true
                         gestureMode = SheepGestureMode.PENDING
                         initialPointerY = offset.y
                         initialEventTimeMillis = Clock.System.now().toEpochMilliseconds()
@@ -178,6 +232,7 @@ fun CountingSheepScreen(
                             timeMillis = Clock.System.now().toEpochMilliseconds(),
                             position = offset
                         )
+                        coordinator.onPointerActivity(MonotonicClock.nowMillis())
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
@@ -186,6 +241,7 @@ fun CountingSheepScreen(
                             timeMillis = change.uptimeMillis,
                             position = change.position
                         )
+                        coordinator.onPointerActivity(MonotonicClock.nowMillis())
 
                         if (gestureMode == SheepGestureMode.PENDING) {
                             val currentUpwardDistance = maxOf(0f, initialPointerY - change.position.y)
@@ -237,119 +293,64 @@ fun CountingSheepScreen(
                         val screenHeight = screenSize.height
                         val playAreaStartY = screenHeight * 0.35f
                         val playAreaHeight = screenHeight - playAreaStartY
+                        val now = MonotonicClock.nowMillis()
 
                         if (screenWidth > 0 && playAreaHeight > 0) {
                             if (gestureMode == SheepGestureMode.DRAGGING && draggedSheep != null) {
                                 val dropX = draggedSheep!!.x.coerceIn(0f, screenWidth - sheepBaseSizePx)
                                 val dropY = draggedSheep!!.y.coerceIn(playAreaStartY, screenHeight - sheepBaseSizePx)
-                                val capturedDropX = dropX
-                                val capturedDropY = dropY
 
-                                scope.launch {
-                                    if (accessMode == SheepAccessMode.UNLIMITED) {
-                                        val lifetime = randomLifetimeSeconds()
-                                        val turnInterval = randomTurnIntervalSeconds()
-                                        val droppedSheep = SheepItem(
-                                            id = sheepCount,
-                                            x = capturedDropX,
-                                            y = capturedDropY,
-                                            vx = (Random.nextFloat() - 0.5f) * 500f,
-                                            vy = (Random.nextFloat() - 0.5f) * 500f,
-                                            artwork = sheepArtwork,
-                                            motionState = SheepMotionState.ACTIVE,
-                                            ageSeconds = 0f,
-                                            lifetimeSeconds = lifetime,
-                                            nextZigzagTurnIn = turnInterval,
-                                            zigzagTurnInterval = turnInterval,
-                                            gaitPhaseRadians = initialGaitPhase(sheepCount)
-                                        )
-                                        val updatedSheep = makeRoomForNewSheep(sheepList.value, meadowCapacity, screenWidth, sheepBaseSizePx)
-                                        sheepList.value = updatedSheep + droppedSheep
-                                        sheepCount++
-                                    } else {
-                                        when (val result = dailySheepQuotaRepository.tryConsumeSheep()) {
-                                            is ConsumeSheepResult.Allowed -> {
-                                                val lifetime = randomLifetimeSeconds()
-                                                val turnInterval = randomTurnIntervalSeconds()
-                                                val droppedSheep = SheepItem(
-                                                    id = sheepCount,
-                                                    x = capturedDropX,
-                                                    y = capturedDropY,
-                                                    vx = (Random.nextFloat() - 0.5f) * 500f,
-                                                    vy = (Random.nextFloat() - 0.5f) * 500f,
-                                                    artwork = sheepArtwork,
-                                                    motionState = SheepMotionState.ACTIVE,
-                                                    ageSeconds = 0f,
-                                                    lifetimeSeconds = lifetime,
-                                                    nextZigzagTurnIn = turnInterval,
-                                                    zigzagTurnInterval = turnInterval,
-                                                    gaitPhaseRadians = initialGaitPhase(sheepCount)
-                                                )
-                                                val updatedSheep = makeRoomForNewSheep(sheepList.value, meadowCapacity, screenWidth, sheepBaseSizePx)
-                                                sheepList.value = updatedSheep + droppedSheep
-                                                sheepCount++
-                                            }
-                                            is ConsumeSheepResult.Exhausted -> {
-                                                exhaustedQuota = result.quota
-                                            }
-                                        }
-                                    }
-                                }
+                                val elapsed = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
+                                val distance = maxOf(0f, -totalDragY)
+                                val speed = if (elapsed > 0) distance / (elapsed / 1000f) else 0f
+
+                                val sample = GestureSample(
+                                    mode = GestureMode.DRAG,
+                                    durationMillis = elapsed,
+                                    upwardDistanceDp = distance / densityScale,
+                                    effectiveSpeedDpPerSecond = speed / densityScale,
+                                    completed = true,
+                                    cancelled = false
+                                )
+
+                                createSheep(sample, dropX, dropY, screenWidth, sheepBaseSizePx, now)
                             } else {
                                 val isUpwardSwipe = totalDragY < -minUpwardDistancePx
                                 if (isUpwardSwipe) {
                                     val velocity = velocityTracker.calculateVelocity()
                                     val releaseUpwardSpeed = -velocity.y
-                                    val averageUpwardSpeed = maxOf(0f, -totalDragY / maxOf(0.001f, (Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis) / 1000f))
+                                    val elapsed = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
+                                    val averageUpwardSpeed = maxOf(0f, -totalDragY / maxOf(0.001f, elapsed / 1000f))
                                     val effectiveUpwardSpeed = maxOf(averageUpwardSpeed, releaseUpwardSpeed)
 
                                     if (effectiveUpwardSpeed >= slowGestureThresholdPxPerSecond) {
-                                        scope.launch {
-                                            if (accessMode == SheepAccessMode.UNLIMITED) {
-                                                val updatedSheep = makeRoomForNewSheep(sheepList.value, meadowCapacity, screenWidth, sheepBaseSizePx)
-                                                val lifetime = randomLifetimeSeconds()
-                                                val turnInterval = randomTurnIntervalSeconds()
-                                                val newSheep = SheepItem(
-                                                    id = sheepCount,
-                                                    x = Random.nextFloat() * maxOf(0f, screenWidth - sheepBaseSizePx),
-                                                    y = playAreaStartY + Random.nextFloat() * maxOf(0f, playAreaHeight - sheepBaseSizePx),
-                                                    vx = (Random.nextFloat() - 0.5f) * 500f,
-                                                    vy = (Random.nextFloat() - 0.5f) * 500f,
-                                                    artwork = sheepArtwork,
-                                                    gaitPhaseRadians = initialGaitPhase(sheepCount),
-                                                    lifetimeSeconds = lifetime,
-                                                    nextZigzagTurnIn = turnInterval,
-                                                    zigzagTurnInterval = turnInterval
-                                                )
-                                                sheepList.value = updatedSheep + newSheep
-                                                sheepCount++
-                                            } else {
-                                                when (val result = dailySheepQuotaRepository.tryConsumeSheep()) {
-                                                    is ConsumeSheepResult.Allowed -> {
-                                                        val updatedSheep = makeRoomForNewSheep(sheepList.value, meadowCapacity, screenWidth, sheepBaseSizePx)
-                                                        val lifetime = randomLifetimeSeconds()
-                                                        val turnInterval = randomTurnIntervalSeconds()
-                                                        val newSheep = SheepItem(
-                                                            id = sheepCount,
-                                                            x = Random.nextFloat() * maxOf(0f, screenWidth - sheepBaseSizePx),
-                                                            y = playAreaStartY + Random.nextFloat() * maxOf(0f, playAreaHeight - sheepBaseSizePx),
-                                                            vx = (Random.nextFloat() - 0.5f) * 500f,
-                                                            vy = (Random.nextFloat() - 0.5f) * 500f,
-                                                            artwork = sheepArtwork,
-                                                            gaitPhaseRadians = initialGaitPhase(sheepCount),
-                                                            lifetimeSeconds = lifetime,
-                                                            nextZigzagTurnIn = turnInterval,
-                                                            zigzagTurnInterval = turnInterval
-                                                        )
-                                                        sheepList.value = updatedSheep + newSheep
-                                                        sheepCount++
-                                                    }
-                                                    is ConsumeSheepResult.Exhausted -> {
-                                                        exhaustedQuota = result.quota
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        val distanceDp = -totalDragY / densityScale
+                                        val speedDp = effectiveUpwardSpeed / densityScale
+
+                                        val sample = GestureSample(
+                                            mode = GestureMode.FLICK,
+                                            durationMillis = elapsed,
+                                            upwardDistanceDp = distanceDp,
+                                            effectiveSpeedDpPerSecond = speedDp,
+                                            completed = true,
+                                            cancelled = false
+                                        )
+
+                                        val newX = Random.nextFloat() * maxOf(0f, screenWidth - sheepBaseSizePx)
+                                        val newY = playAreaStartY + Random.nextFloat() * maxOf(0f, playAreaHeight - sheepBaseSizePx)
+                                        createSheep(sample, newX, newY, screenWidth, sheepBaseSizePx, now)
+                                    } else {
+                                        coordinator.recordAttempt(
+                                            GestureSample(
+                                                mode = GestureMode.FLICK,
+                                                durationMillis = elapsed,
+                                                upwardDistanceDp = -totalDragY / densityScale,
+                                                effectiveSpeedDpPerSecond = effectiveUpwardSpeed / densityScale,
+                                                completed = false,
+                                                cancelled = false
+                                            ),
+                                            now
+                                        )
                                     }
                                 }
                             }
@@ -358,26 +359,42 @@ fun CountingSheepScreen(
                         gestureMode = SheepGestureMode.PENDING
                     },
                     onDragCancel = {
+                        val elapsed = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
+                        coordinator.recordAttempt(
+                            GestureSample(
+                                mode = GestureMode.DRAG,
+                                durationMillis = elapsed,
+                                upwardDistanceDp = 0f,
+                                effectiveSpeedDpPerSecond = 0f,
+                                completed = false,
+                                cancelled = true
+                            ),
+                            MonotonicClock.nowMillis()
+                        )
                         draggedSheep = null
                         gestureMode = SheepGestureMode.PENDING
                     }
                 )
             }
     ) {
-        Image(
-            painter = painterResource(Res.drawable.background_counting),
-            contentDescription = Strings.CD_COUNTING_BACKGROUND,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(Res.drawable.background_counting),
+                contentDescription = Strings.CD_COUNTING_BACKGROUND,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                colorFilter = ColorFilter.colorMatrix(sceneColorMatrix)
+            )
 
-        LayeredSheepCanvas(
-            sheepList = sheepList.value,
-            draggedSheep = draggedSheep,
-            sheepBaseSizePx = sheepBaseSizePx,
-            frameCounter = frameCounter,
-            modifier = Modifier.fillMaxSize()
-        )
+            LayeredSheepCanvas(
+                sheepList = sheepList.value,
+                draggedSheep = draggedSheep,
+                sheepBaseSizePx = sheepBaseSizePx,
+                frameCounter = frameCounter,
+                modifier = Modifier.fillMaxSize(),
+                colorFilter = ColorFilter.colorMatrix(sceneColorMatrix)
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -403,7 +420,7 @@ fun CountingSheepScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            if (!isUserInteracting) {
+            if (sheepCount == 0) {
                 SwipeUpIndicator()
             }
 
@@ -506,7 +523,7 @@ private fun SwipeUpIndicator() {
     }
 }
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 @Preview
 @Composable
 fun CountingSheepScreenPreview() {
@@ -517,7 +534,11 @@ fun CountingSheepScreenPreview() {
         limitedSheepEnabled = false,
         purchaseState = UnlimitedSheepPurchaseState(),
         onPurchase = {},
-        onRestore = {}
+        onRestore = {},
+        coordinator = CountingSessionCoordinator(
+            sessionRepository = MockSessionRepository(),
+            scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main)
+        )
     )
 }
 

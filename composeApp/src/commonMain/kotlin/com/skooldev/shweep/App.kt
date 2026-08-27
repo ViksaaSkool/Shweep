@@ -7,6 +7,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import com.skooldev.shweep.data.DailySheepQuotaRepositoryImpl
+import com.skooldev.shweep.data.SessionEndReason
 import com.skooldev.shweep.data.SessionRepositoryImpl
 import com.skooldev.shweep.data.SettingsRepositoryImpl
 import com.skooldev.shweep.data.SheepColor
@@ -35,7 +36,8 @@ enum class Screen {
 @Suppress("DEPRECATION")
 @Composable
 fun App(
-    purchaseGateway: StorePurchaseGateway
+    purchaseGateway: StorePurchaseGateway,
+    visibilityMonitor: AppVisibilityMonitor
 ) {
     MaterialTheme {
         val limitedSheepEnabled = FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED
@@ -53,6 +55,39 @@ fun App(
         val purchaseState by purchaseManager.state.collectAsState()
         val scope = rememberCoroutineScope()
         val uriHandler = LocalUriHandler.current
+
+        val coordinator = remember(sessionRepository, scope) {
+            CountingSessionCoordinator(sessionRepository, scope)
+        }
+
+        LaunchedEffect(Unit) {
+            coordinator.recoverOrphanedSession()
+        }
+
+        LaunchedEffect(visibilityMonitor, currentScreen) {
+            visibilityMonitor.events.collect { event ->
+                if (currentScreen == Screen.Counting) {
+                    when (event) {
+                        AppVisibilityEvent.Background -> {
+                            coordinator.onBackground()
+                        }
+                        AppVisibilityEvent.Foreground -> {
+                            when (coordinator.onForeground()) {
+                                CountingSessionCoordinator.ForegroundResult.SessionEnded -> {
+                                    currentScreen = Screen.Start
+                                }
+                                CountingSessionCoordinator.ForegroundResult.Resumed -> {
+                                    // Session continues
+                                }
+                                CountingSessionCoordinator.ForegroundResult.NoSession -> {
+                                    // No active session
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         DisposableEffect(purchaseManager, limitedSheepEnabled) {
             if (limitedSheepEnabled) {
@@ -81,7 +116,10 @@ fun App(
         when (currentScreen) {
             Screen.Start -> {
                 StartScreen(
-                    onGoToSleepClick = { currentScreen = Screen.Counting },
+                    onGoToSleepClick = {
+                        coordinator.startSession()
+                        currentScreen = Screen.Counting
+                    },
                     onHistoryClick = { currentScreen = Screen.History },
                     onSettingsClick = { currentScreen = Screen.Settings },
                     sheepColor = selectedColor
@@ -89,14 +127,18 @@ fun App(
             }
             Screen.Counting -> {
                 CountingSheepScreen(
-                    onBackClick = { currentScreen = Screen.Start },
+                    onBackClick = {
+                        coordinator.endSession(SessionEndReason.USER_EXIT)
+                        currentScreen = Screen.Start
+                    },
                     sessionRepository = sessionRepository,
                     dailySheepQuotaRepository = dailySheepQuotaRepository,
                     limitedSheepEnabled = limitedSheepEnabled,
                     purchaseState = purchaseState,
                     onPurchase = { purchaseManager.purchase() },
                     onRestore = { purchaseManager.restore() },
-                    sheepArtwork = selectedColor.toArtwork()
+                    sheepArtwork = selectedColor.toArtwork(),
+                    coordinator = coordinator
                 )
             }
             Screen.History -> {
@@ -134,6 +176,9 @@ fun App(
         }
 
         BackHandler(enabled = currentScreen == Screen.Settings || currentScreen == Screen.Counting || currentScreen == Screen.History) {
+            if (currentScreen == Screen.Counting) {
+                coordinator.endSession(SessionEndReason.USER_EXIT)
+            }
             currentScreen = Screen.Start
         }
 
@@ -151,10 +196,17 @@ fun App(
     }
 }
 
+private class NoOpVisibilityMonitor : AppVisibilityMonitor {
+    override val events = kotlinx.coroutines.flow.emptyFlow<AppVisibilityEvent>()
+}
+
 @Preview
 @Composable
 fun AppPreview() {
     MaterialTheme {
-        App(purchaseGateway = MockStorePurchaseGateway())
+        App(
+            purchaseGateway = MockStorePurchaseGateway(),
+            visibilityMonitor = NoOpVisibilityMonitor()
+        )
     }
 }

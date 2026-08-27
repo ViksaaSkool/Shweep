@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
@@ -72,7 +73,8 @@ internal fun LayeredSheepCanvas(
     draggedSheep: SheepItem? = null,
     sheepBaseSizePx: Float,
     frameCounter: Int = 0,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    colorFilter: ColorFilter? = null
 ) {
     val whiteImages = rememberWhiteSheepRigImages()
     val hasBlackSheep = sheepList.any { it.artwork == SheepArtwork.BLACK } || draggedSheep?.artwork == SheepArtwork.BLACK
@@ -80,10 +82,10 @@ internal fun LayeredSheepCanvas(
 
     Canvas(modifier = modifier) {
         for (sheep in sheepList) {
-            drawSheep(sheep, sheepBaseSizePx, whiteImages, blackImages)
+            drawSheep(sheep, sheepBaseSizePx, whiteImages, blackImages, colorFilter)
         }
 
-        draggedSheep?.let { drawSheep(it, sheepBaseSizePx, whiteImages, blackImages) }
+        draggedSheep?.let { drawSheep(it, sheepBaseSizePx, whiteImages, blackImages, colorFilter) }
     }
 }
 
@@ -91,7 +93,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSheep(
     sheep: SheepItem,
     sheepBaseSizePx: Float,
     whiteImages: SheepRigImages,
-    blackImages: SheepRigImages?
+    blackImages: SheepRigImages?,
+    colorFilter: ColorFilter? = null
 ) {
     val images = when (sheep.artwork) {
         SheepArtwork.WHITE -> whiteImages
@@ -110,14 +113,15 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSheep(
         scale(unitScale, unitScale, pivot = Offset.Zero)
     }) {
         for (slot in SHEEP_RIG_GEOMETRY.legDrawOrder) {
-            drawLeg(images[slot], SHEEP_RIG_GEOMETRY[slot], pose.angleFor(slot))
+            drawLeg(images[slot], SHEEP_RIG_GEOMETRY[slot], pose.angleFor(slot), colorFilter)
         }
         drawImage(
             image = images.body,
             dstOffset = IntOffset(
                 SHEEP_RIG_GEOMETRY.body.bitmapOffsetX.roundToInt(),
                 SHEEP_RIG_GEOMETRY.body.bitmapOffsetY.roundToInt()
-            )
+            ),
+            colorFilter = colorFilter
         )
     }
 }
@@ -125,7 +129,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSheep(
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawLeg(
     bitmap: ImageBitmap,
     geometry: SheepLayerGeometry,
-    angleDegrees: Float
+    angleDegrees: Float,
+    colorFilter: ColorFilter? = null
 ) {
     withTransform({
         rotate(
@@ -138,7 +143,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawLeg(
             dstOffset = IntOffset(
                 geometry.bitmapOffsetX.roundToInt(),
                 geometry.bitmapOffsetY.roundToInt()
-            )
+            ),
+            colorFilter = colorFilter
         )
     }
 }
