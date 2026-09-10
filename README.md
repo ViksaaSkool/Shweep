@@ -1,53 +1,59 @@
-# Overview
+# Shweep app
 
-Shweep combines beautiful, calming visuals with interactive sheep animation to create a soothing bedtime experience. Users swipe up to add sheep, watch them wander and collide in a meadow, and track their sleep attempts over time.
+![icon.png](art/icon.png)
 
-## Features
+Go to sleep like your ancestors did with a proven method and stop doom scrolling! 
+Now with Shweep **(Sheep, Sleep, Swipe)** you can swipe sheep and go to sleep. 
+Technology meets tradition.
 
-- 🐑 **Interactive Sheep Animation**: Physics-based sheep movement with collision detection
-- ⏱️ **Session Timer**: Track how long each sleep attempt lasts
-- 📊 **Sleep History**: View past sessions with DataStore persistence
-- 🎨 **Beautiful Design**: Dreamy night-time aesthetic with mountain landscapes
-- 📱 **Cross-Platform**: Single codebase for Android and iOS using Kotlin Multiplatform
+# Demo 
 
-## Documentation
+<img src="art/scr/0.png" width="200" height="400"/> <img src="art/scr/1.png" width="200" height="400"/> <img src="art/scr/video.gif" width="200" height="400"/>
 
-### [PLAN.md](PLAN.md) - Project Planning
-Documentation of the design process from initial hand-drawn wireframes to final Figma designs. Includes:
-- Concept sketches and wireframes
-- AI-powered design generation workflow
-- Design iterations and refinements
-- Brand assets and visual identity
 
-### [SETUP.md](SETUP.md) - Development Setup
-Complete guide for setting up the development environment with:
-- OpenCode configuration
-- Figma MCP integration for design-to-code workflow
-- GitHub MCP for version control
-- Kotlin Multiplatform project structure
+# About 
 
-### [PROMPTS.md](PROMPTS.md) - Development History
-Chronological documentation of all development prompts and conversations:
-- Initial project setup and planning
-- Screen-by-screen implementation
-- Bug fixes and refinements
-- Key architectural decisions
+The app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
 
-## Quick Start
+![about.png](art/about.png)
 
-```bash
-# Clone the repository
-git clone https://github.com/ViksaaSkool/Shweep.git
 
-# Open in Android Studio or IntelliJ IDEA
-# Build and run on Android emulator or iOS simulator
+
+# Implementation
+
+For implementation switch branches and go to `develop_opencode_kimi` branch to see the vibe engineering details 
+with the help of OpenCode and Kimi 2.5 or click [here](https://github.com/ViksaaSkool/Shweep/tree/develop_opencode_kimi).
+
+# Repository layout
+
+This repository ships two deliverables that must stay separated:
+
+| Path | Purpose | Ships where |
+|------|---------|-------------|
+| `composeApp/src/**` | KMP app code and packaged resources | Android / iOS app |
+| `iosApp/iosApp/**` | iOS app sources and assets | iOS app |
+| `docs/**` | GitHub Pages website (pages, video, poster) | GitHub Pages only |
+| `art/background/**` | Website animation source layers | GitHub only (not published) |
+| `tools/**` | Repo tooling (renderer, asset guard) | GitHub only |
+
+Website files (`.html`, `.css`, `.mp4`, `.webm`, `landing-*`) must never appear
+inside the app source sets or a packaged app bundle.
+
+Guards:
+
+- `tools/web_asset_guard.py check-source` fails if website assets are found in
+  app source sets.
+- `tools/web_asset_guard.py check-archive <apk/aab/.app>` fails if website
+  assets are found inside a built artifact.
+- `.github/workflows/web-asset-boundary.yml` runs both on GitHub.
+
+Regenerating the landing background video:
+
+```sh
+python3 tools/render_background_frames.py
+# then re-encode with ffmpeg (see script header)
 ```
 
-## Tech Stack
+# License
 
-- **Kotlin Multiplatform**: Shared business logic
-- **Compose Multiplatform**: Shared UI components
-- **DataStore**: Cross-platform persistent storage
-- **Coroutines**: Asynchronous programming
-- **Figma**: Design system and assets
-
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details. 
