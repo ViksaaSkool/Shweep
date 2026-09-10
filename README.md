@@ -21,8 +21,8 @@ The app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
 
 # Implementation
 
-For implementation switch branches and go to `develop_opencode_kimi` branch to see the vibe engineering details 
-with the help of OpenCode and Kimi 2.5 or click [here](https://github.com/ViksaaSkool/Shweep/tree/develop_opencode_kimi).
+For implementation switch branches and go to `feature/devbg` branch to see the vibe engineering details 
+with the help of OpenCode and Kimi 2.5 or click [here](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg).
 
 # Repository layout
 
@@ -33,19 +33,28 @@ This repository ships two deliverables that must stay separated:
 | `composeApp/src/**` | KMP app code and packaged resources | Android / iOS app |
 | `iosApp/iosApp/**` | iOS app sources and assets | iOS app |
 | `docs/**` | GitHub Pages website (pages, video, poster) | GitHub Pages only |
-| `art/background/**` | Website animation source layers | GitHub only (not published) |
+| `art/**` | Repository source artwork (demo shots, animation layers) | GitHub only (not packaged) |
 | `tools/**` | Repo tooling (renderer, asset guard) | GitHub only |
 
-Website files (`.html`, `.css`, `.mp4`, `.webm`, `landing-*`) must never appear
-inside the app source sets or a packaged app bundle.
+Website files (`.html`, `.css`, `.mp4`, `.webm`, `landing-*`), symlinks, and any
+byte-identical copy of an `art/` or `docs/` file must never appear inside the
+app source sets or inside a packaged APK/AAB/`.app` bundle.
 
 Guards:
 
-- `tools/web_asset_guard.py check-source` fails if website assets are found in
-  app source sets.
-- `tools/web_asset_guard.py check-archive <apk/aab/.app>` fails if website
+- `tools/web_asset_guard.py check-source` fails if website assets, renamed
+  copies of `art/`/`docs/` files, or symlinks are found in app build inputs,
+  or if a Gradle/Xcode source directory is redirected into `art/` or `docs/`.
+- `tools/web_asset_guard.py check-pages` fails if the Pages artifact would
+  include anything other than `docs/`, or if a docs page references files
+  outside `docs/`.
+- `tools/web_asset_guard.py check-archive <apk|aab|.app>` fails if website
   assets are found inside a built artifact.
-- `.github/workflows/web-asset-boundary.yml` runs both on GitHub.
+- `tools/web_asset_guard.py self-test` verifies the guard detects violations
+  using synthetic fixtures.
+- `.github/workflows/web-asset-boundary.yml` runs all of the above on GitHub,
+  and additionally builds the debug APK, release AAB, and an iOS simulator
+  `.app`, then inspects each artifact.
 
 Regenerating the landing background video:
 
