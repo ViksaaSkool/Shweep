@@ -1,0 +1,39 @@
+name: Web Asset Boundary
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify no website assets in app source sets
+        run: python3 tools/web_asset_guard.py check-source
+
+  android-package:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build debug APK
+        run: ./gradlew :composeApp:assembleDebug --no-daemon
+      - name: Verify APK contains no website assets
+        run: python3 tools/web_asset_guard.py check-archive composeApp/build/outputs/apk/debug/composeApp-debug.apk
