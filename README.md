@@ -2,6 +2,17 @@
 
 Shweep combines beautiful, calming visuals with interactive sheep animation to create a soothing bedtime experience. Users swipe up to add sheep, watch them wander and collide in a meadow, and track their sleep attempts over time.
 
+
+# Demo
+
+<img src="art/scr/0.png" width="200" height="400"/> <img src="art/scr/1.png" width="200" height="400"/> <img src="art/scr/video.gif" width="200" height="400"/>
+
+
+# About
+
+The app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
+
+
 ## Features
 
 - 🐑 **Interactive Sheep Animation**: Physics-based sheep movement with collision detection
