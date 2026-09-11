@@ -42,7 +42,7 @@ internal fun HistorySessionCard(
                 )
 
                 Text(
-                    text = Strings.HISTORY_STARTED_AT.format(session.startTimeText),
+                    text = Strings.HISTORY_STARTED_AT.replace("%s", session.startTimeText),
                     fontSize = Dimens.fontSizeSmall,
                     color = AppColors.TextMuted
                 )
