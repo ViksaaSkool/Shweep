@@ -13,16 +13,24 @@ Technology meets tradition.
 
 # About 
 
-The app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
+The legacy version of the app is part of the talk [for dev.bg](https://d.dev.bg/mverwxy8)
 
-![about.png](art/about.png)
+![Devbg](art/dev_bg.png)
+
+For more context see [the branch dedicated for that session](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg)
 
 
+The current version of the app is part of the talk [for Droidcon Lisbon 26](https://x.com/droidconLisbon/status/2089261109689643248)
 
-# Implementation
+![Droidcon](art/dclx_26.png)
 
-For implementation switch branches and go to `feature/devbg` branch to see the vibe engineering details 
-with the help of OpenCode and Kimi 2.5 or click [here](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg).
+
+# Documentation
+
+For context first go through [legacy documentation](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg#documentation) of the app and look into the [PLAN](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PLAN.md), [SETUP](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/SETUP.md) and [PROMPTS](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PROMPTS.md)
+
+THe current version has these features: 
+
 
 # Repository layout
 
@@ -62,6 +70,9 @@ Regenerating the landing background video:
 python3 tools/render_background_frames.py
 # then re-encode with ffmpeg (see script header)
 ```
+
+# Download
+
 
 # License
 

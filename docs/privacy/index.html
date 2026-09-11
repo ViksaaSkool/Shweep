@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy – Shweep</title>
-    <meta name="description" content="Privacy policy for the Shweep app.">
-    <meta name="robots" content="noindex">
+    <meta name="description" content="Privacy policy for the Shweep app and website.">
     <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon-16.png">
     <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
@@ -19,59 +18,122 @@
         </nav>
 
         <h1>Privacy Policy</h1>
-        <p class="legal-updated">Last updated: 24 August 2026</p>
+        <p class="legal-updated">Last updated: 11 September 2026</p>
 
-        <p>This Privacy Policy describes how SkoolDev ("Operator", "we", "us", or "our") handles information when you use the Shweep mobile application ("App").</p>
+        <p>This Privacy Policy describes how SkoolDev ("Operator", "we", "us", or "our") handles information for the Shweep mobile application ("App") and the Shweep website at viksaskool.github.io/Shweep (the "Website").</p>
 
         <h2>1. Overview</h2>
-        <p>Shweep is designed with privacy in mind. The App does not collect personal information, does not create user accounts, and does not transmit data to SkoolDev.</p>
+        <p>Shweep is designed to keep your activity on your device. The App processes and stores app-activity information locally. In the current version, SkoolDev does not automatically receive that information.</p>
+        <p>The App has:</p>
+        <ul>
+            <li>no Shweep account and no login</li>
+            <li>no SkoolDev backend for session or gesture data</li>
+            <li>no first-party analytics or advertising</li>
+            <li>no automatic upload of session or gesture information</li>
+        </ul>
+        <p>This policy separates (a) data processed on your device, (b) data you send us directly, and (c) data handled independently by Apple, Google, GitHub, or other services you choose to use.</p>
 
         <h2>2. Information Stored on Your Device</h2>
-        <p>The App stores the following data locally on your device using your platform's local storage:</p>
+        <p>The App stores the following information locally using your platform's app storage.</p>
+        <p>Completed sessions (shown in Sleepstory):</p>
         <ul>
-            <li>sleep session records, including date, time, and number of sheep swiped</li>
-            <li>your sheep color preference (white or black)</li>
-            <li>whether you have completed the initial sheep color selection</li>
+            <li>a random session identifier</li>
+            <li>session start timestamp and end timestamp</li>
+            <li>number of sheep counted in the session</li>
+            <li>a session end reason (for example, you exited the session or the App was away for a while)</li>
         </ul>
-        <p>This data never leaves your device and is not accessible to SkoolDev. You can clear it at any time by clearing the App's data or uninstalling the App.</p>
-
-        <h2>3. Purchases</h2>
-        <p>If you make an in-app purchase (such as the Unlimited Sheep option), the transaction is handled entirely by Apple (App Store) or Google (Google Play). SkoolDev does not collect, process, or store any payment information. Purchase verification is done locally on your device through the store's own APIs.</p>
-
-        <h2>4. Sharing</h2>
-        <p>The App's Share feature sends a pre-written invitation message through your device's native sharing interface. SkoolDev does not access your contacts, read your message history, or send messages on your behalf. The content shared includes generic store links, not personal data.</p>
-
-        <h2>5. What the App Does Not Do</h2>
-        <p>The App does not:</p>
+        <p>Active session checkpoint (used to track and recover a session in progress):</p>
         <ul>
-            <li>collect or transmit personal information</li>
-            <li>create accounts or require login</li>
-            <li>use analytics, advertising, or tracking SDKs</li>
-            <li>access your contacts, camera, microphone, or location</li>
-            <li>collect device identifiers for profiling</li>
-            <li>sell or share any data with third parties</li>
-            <li>use background data collection</li>
+            <li>a random session identifier</li>
+            <li>session start timestamp</li>
+            <li>the time of your last successful sheep interaction</li>
+            <li>current sheep count</li>
+            <li>an optional timestamp recorded when the App enters the background</li>
+        </ul>
+        <p>Preferences:</p>
+        <ul>
+            <li>your sheep color choice (white or black)</li>
+            <li>whether you completed the initial sheep color selection</li>
+        </ul>
+        <p>Sheep allowance data (only if a version enables a daily limit):</p>
+        <ul>
+            <li>a sheep usage count</li>
+            <li>the start of the current allowance period</li>
         </ul>
 
-        <h2>6. Backups and Sync</h2>
-        <p>If your device or operating system performs automatic backups or cloud sync (e.g., iCloud or Google backup), App data may be included in those backups according to your device settings. This backup process is controlled by Apple, Google, or your device manufacturer, not by SkoolDev.</p>
+        <h2>3. Temporary Interaction Processing</h2>
+        <p>While a counting session is active, the App measures your touch interaction to control the grayscale visual effect. This includes:</p>
+        <ul>
+            <li>gesture type (a quick flick or a slower drag)</li>
+            <li>gesture duration, upward distance, and speed</li>
+            <li>whether a gesture was completed, failed, or cancelled</li>
+            <li>recent swipe timing and the time since your last interaction</li>
+            <li>a derived grayscale level</li>
+        </ul>
+        <p>These detailed samples are held temporarily in memory. They are not added to Sleepstory, are not transmitted to SkoolDev, and are cleared when the session ends. The App does not use the gyroscope, accelerometer, microphone, camera, or other sensors to estimate sleep.</p>
 
-        <h2>7. Communications</h2>
-        <p>If you contact us at <a href="mailto:support@skooldev.com">support@skooldev.com</a> or through the GitHub repository, we will use your message solely to respond to your inquiry. We will not add your email to any mailing list without separate consent.</p>
+        <h2>4. Sessions, Backgrounding, and Estimates</h2>
+        <p>A session begins when you select "Go to sleep." The App updates a local checkpoint as you count sheep. If the App moves to the background, it records a local timestamp:</p>
+        <ul>
+            <li>if you return within about 10 seconds, the session resumes</li>
+            <li>if you remain away for at least about 10 seconds, the session ends at the recorded background timestamp</li>
+            <li>an interrupted session may be recovered and completed the next time you open the App</li>
+        </ul>
+        <p>The App does not run a continuous background timer, does not monitor sensors in the background, and does not transmit data in the background.</p>
+        <p>"Time to sleep," "nights," and Sleepstory values describe time you spent in a Shweep counting session. They do not measure actual sleep duration and do not confirm when you fell asleep.</p>
 
-        <h2>8. Website Hosting</h2>
-        <p>This website is hosted on GitHub Pages. When you visit this site, GitHub may automatically log basic server information such as your IP address, browser type, and requested pages, in accordance with <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement">GitHub's Privacy Statement</a>.</p>
+        <h2>5. Purchases</h2>
+        <p>Some versions of Shweep may offer an optional purchase, such as unlimited sheep, where displayed in the App. Purchases are available only when they appear in the App.</p>
+        <p>When a purchase is offered:</p>
+        <ul>
+            <li>Apple (App Store) or Google (Google Play) processes payment credentials and store-account information</li>
+            <li>the App may receive product information, the localized price, purchase status, entitlement state, and transaction errors</li>
+            <li>on Android, the App may receive a purchase token to acknowledge the transaction</li>
+            <li>SkoolDev does not operate a purchase-verification server in the current implementation and does not collect payment details</li>
+        </ul>
+        <p>Purchase availability and restoration depend on your platform and app version. See the Terms of Service for purchase conditions.</p>
 
-        <h2>9. Children's Privacy</h2>
-        <p>The App does not knowingly collect information from children. Because the App does not collect personal data, it does not require parental consent under COPPA, GDPR, or similar regulations.</p>
+        <h2>6. Sharing and External Links</h2>
+        <p><strong>Sharing.</strong> The App's Share feature prepares a generic invitation message with Shweep store links. You choose whether and where to send it through your device's native share interface. Shweep does not read your contacts or message history and does not send messages on your behalf. The destination you choose may process the message and related metadata under its own privacy policy.</p>
+        <p><strong>External links.</strong> Settings may open external pages in your browser, including GitHub Pages, GitHub, Google Play, the Apple App Store, Buy Me a Coffee (if enabled), and support email. These services may receive normal browser, device, account, cookie, or payment information according to their own policies.</p>
 
-        <h2>10. Your Rights</h2>
-        <p>Because we do not collect or store any personal information, there is no personal data for us to access, correct, or delete. Session history and preferences are stored entirely on your device under your control.</p>
+        <h2>7. What SkoolDev Does Not Receive</h2>
+        <p>In the current version, the App does not automatically send SkoolDev your locally stored session history or detailed gesture samples. The App does not use analytics or advertising SDKs, does not require an account, and does not access your location, camera, microphone, or contacts. SkoolDev does not sell your local session data and does not use device identifiers for profiling.</p>
+        <p>The App does not continuously monitor or transmit data in the background. It may save a local session checkpoint and background timestamp when its lifecycle changes.</p>
 
-        <h2>11. Changes to This Policy</h2>
-        <p>We may update this Privacy Policy from time to time. The latest version will be posted on this page with an updated date. Material changes will be communicated through reasonable means, such as an in-app notice or an update to this page.</p>
+        <h2>8. Device Backups and Transfers</h2>
+        <p>Your operating system may include App data in device backups, restores, or device transfers:</p>
+        <ul>
+            <li>Android backup is enabled for the App</li>
+            <li>iOS stores App data in a backup-eligible location</li>
+        </ul>
+        <p>Apple, Google, or your device manufacturer control those backups under your device settings. Shweep does not provide its own cloud-sync service. Because platform backups may retain copies, App data can leave your device through these services even though Shweep itself does not upload it.</p>
 
-        <h2>12. Contact</h2>
+        <h2>9. Retention and Deletion</h2>
+        <p>Completed sessions are retained locally without automatic expiration, and there is currently no in-app control to delete session history. You can remove App data by clearing the App's storage (Android) or deleting the App (Android and iOS). Deleting the App may not immediately remove copies retained in platform backups. SkoolDev cannot remotely access or delete records stored on your device.</p>
+
+        <h2>10. Communications</h2>
+        <p>If you email <a href="mailto:support@skooldev.com">support@skooldev.com</a> or contact us on GitHub, you choose what information to provide. GitHub issues and discussions may be public. We use correspondence to respond to your request and may retain it as reasonably necessary to answer you, keep records, prevent abuse, or comply with legal obligations. You may ask us to delete correspondence we control, subject to applicable requirements.</p>
+
+        <h2>11. Website Hosting</h2>
+        <p>This Website is hosted on GitHub Pages. The current Website uses no first-party analytics, forms, advertising, or scripts; it serves static files and links to GitHub. GitHub may process information such as your IP address, browser type, and requested pages as described in <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement">GitHub's Privacy Statement</a>.</p>
+
+        <h2>12. Children's Privacy</h2>
+        <p>Shweep does not provide an age-verification system and is not directed at young children. If you are a minor, use the App only with approval from a parent or guardian where required by your jurisdiction. We do not knowingly collect personal information from children. Because the App does not send us your session data, we generally cannot access or delete it. Parents or guardians with concerns may contact us at <a href="mailto:support@skooldev.com">support@skooldev.com</a>.</p>
+
+        <h2>13. Your Choices and Rights</h2>
+        <p>Your choices depend on where the information lives:</p>
+        <ul>
+            <li>App-local records: you control them through your device and can remove them by clearing App storage or deleting the App</li>
+            <li>Communications you send us: you may request access or deletion of correspondence we control</li>
+            <li>Platform and third-party records: Apple, Google, GitHub, and other services handle their own data under their policies</li>
+        </ul>
+        <p>SkoolDev cannot remotely access, correct, or delete records stored on your device.</p>
+
+        <h2>14. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. The latest version will be posted on this page with a revised date. Where required, we will provide additional notice.</p>
+
+        <h2>15. Contact</h2>
         <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:support@skooldev.com">support@skooldev.com</a>.</p>
     </main>
 
