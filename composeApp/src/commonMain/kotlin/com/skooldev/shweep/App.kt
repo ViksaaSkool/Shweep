@@ -163,8 +163,8 @@ fun App(
                     onInviteFriendsClick = {
                         shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
-                    onBuyCoffeeClick = {
-                        uriHandler.openUri(AppLinks.BUY_ME_A_COFFEE)
+                    onKoFiClick = {
+                        uriHandler.openUri(AppLinks.KO_FI)
                     },
                     onBuyUnlimited = { purchaseManager.purchase() },
                     onRestorePurchases = { purchaseManager.restore() },

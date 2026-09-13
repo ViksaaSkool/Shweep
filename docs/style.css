@@ -184,6 +184,51 @@ body{
 .footer-links a:hover{color:var(--text)}
 
 /* ========================
+   Powered by attribution
+   ======================== */
+.powered-by{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    color:var(--text-muted);
+    font-size:12px;
+}
+.powered-by a{
+    display:inline-flex;
+    align-items:center;
+    border-radius:6px;
+    transition:opacity .2s;
+}
+.powered-by a:hover{opacity:.85}
+.powered-by img{
+    width:20px;
+    height:20px;
+    max-width:20px;
+    max-height:20px;
+    display:block;
+}
+.powered-by a:focus-visible{
+    outline:2px solid var(--text);
+    outline-offset:4px;
+}
+
+/* Landing page: pin attribution to the bottom center */
+.landing > .powered-by{
+    position:absolute;
+    left:50%;
+    bottom:clamp(16px,3vh,32px);
+    transform:translateX(-50%);
+    z-index:2;
+}
+
+/* Legal pages: place attribution under the footer navigation */
+.footer > .powered-by{
+    margin-top:24px;
+    padding:0 20px;
+}
+
+/* ========================
    Legal pages
    ======================== */
 body.legal-page{
@@ -274,13 +319,22 @@ body.legal-page{
     .landing{
         justify-content:center;
         align-items:flex-start;
-        padding-top:18vh;
+        padding-top:16vh;
+        padding-bottom:96px;
         background-position:70% center;
     }
     .landing__video{
         object-position:70% center;
     }
     .landing__card{max-width:100%}
+}
+/* Short viewports: keep the card clear of the bottom attribution */
+@media(max-height:560px){
+    .landing{
+        align-items:flex-start;
+        padding-top:24px;
+        padding-bottom:96px;
+    }
 }
 @media(min-width:641px) and (max-width:1024px){
     .landing{padding:clamp(32px,5vw,60px)}

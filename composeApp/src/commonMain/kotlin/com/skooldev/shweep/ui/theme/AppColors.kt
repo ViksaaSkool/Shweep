@@ -31,4 +31,7 @@ object AppColors {
     val HistoryDurationArc = Color(0xFFC9B8E8)
     val HistoryTrack = Color.White.copy(alpha = 0.14f)
     val HistoryDivider = Color.White.copy(alpha = 0.16f)
+
+    // Ko-fi support button (official Ko-fi blue)
+    val KoFiBlue = Color(0xFF72A5F2)
 }
