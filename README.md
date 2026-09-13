@@ -29,8 +29,21 @@ The current version of the app is part of the talk [for Droidcon Lisbon 26](http
 
 For context first go through [legacy documentation](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg#documentation) of the app and look into the [PLAN](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PLAN.md), [SETUP](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/SETUP.md) and [PROMPTS](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PROMPTS.md)
 
-THe current version has these features: 
+The development history of the current version is documented in [PROMPTS.md](PROMPTS.md), based on the prompt captures in `art/prompts/`.
 
+# Features
+
+- 🐑 **Interactive Sheep Meadow**: Swipe up to flick a sheep into the meadow, or drag and drop one where you want it. Sheep move with a physics-based zig-zag, collide with each other, and drift away after 10–15 seconds so the meadow never overcrowds.
+- 🦵 **Layered, Animated Sheep**: Each sheep is drawn from separate body and leg bitmaps, so the legs actually step while the sheep walk and the body bobs with the gait.
+- 🌗 **Grayscale Wind-Down**: As your swiping slows down, the counting scene gradually loses color. A successful swipe brings the color back, and the Start screen always stays fully colored.
+- 📖 **Sleepstory (Redesigned History)**: A graphical summary with the average time to sleep, a duration arc, and a mini sheep flock, plus per-night cards showing when you started, how long it took, and how many sheep you counted.
+- 🎨 **Sheep Color Choice**: Pick white or black sheep in Settings. Black sheep also switches the Start screen to the dark night background, and a first-launch, non-dismissable dialog makes the initial choice.
+- ⚙️ **Settings**: Sheep color, Privacy Policy, Terms of Service, Support the developer on Ko-fi, and Invite friends. Changes apply only when you tap Save.
+- ⏱️ **Session Tracking**: A session starts on “Go to sleep”, is checkpointed locally, ends after roughly 10 seconds in the background, and is recovered if the app is closed mid-session.
+- 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend.
+- 🐏 **Daily Sheep Allowance + Unlimited Sheep** *(feature-flagged)*: A daily allowance that resets at local noon, and an optional one-time purchase to remove it. Currently disabled, so the app hands out unlimited sheep.
+- 📲 **Cross-Platform**: One Kotlin Multiplatform / Compose Multiplatform codebase for Android and iOS.
+- 🌐 **Legal Pages**: Privacy Policy and Terms of Service published on GitHub Pages at [shweep.lol](https://shweep.lol/).
 
 # Repository layout
 

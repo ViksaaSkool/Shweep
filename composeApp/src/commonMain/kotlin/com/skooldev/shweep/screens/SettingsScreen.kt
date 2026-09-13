@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +27,7 @@ import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_start
 import shweep.composeapp.generated.resources.black_sheep
+import shweep.composeapp.generated.resources.ko_fi_cup
 import shweep.composeapp.generated.resources.sheep
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.ui.theme.Dimens
@@ -42,7 +44,7 @@ fun SettingsScreen(
     onPrivacyPolicyClick: () -> Unit,
     onTermsOfServiceClick: () -> Unit,
     onInviteFriendsClick: () -> Unit,
-    onBuyCoffeeClick: () -> Unit,
+    onKoFiClick: () -> Unit,
     onBuyUnlimited: () -> Unit,
     onRestorePurchases: () -> Unit,
     limitedSheepEnabled: Boolean,
@@ -303,17 +305,26 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
 
             Button(
-                onClick = onBuyCoffeeClick,
+                onClick = onKoFiClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(Dimens.buttonHeight),
                 shape = RoundedCornerShape(Dimens.buttonCornerRadius),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AppColors.Primary
+                    containerColor = AppColors.KoFiBlue,
+                    contentColor = Color.White
                 )
             ) {
+                Image(
+                    painter = painterResource(Res.drawable.ko_fi_cup),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+
+                Spacer(modifier = Modifier.width(Dimens.spacingMedium))
+
                 Text(
-                    text = Strings.BUY_DEVELOPER_COFFEE,
+                    text = Strings.SUPPORT_ON_KO_FI,
                     fontSize = Dimens.fontSizeLarge,
                     fontWeight = FontWeight.Medium
                 )
@@ -369,7 +380,7 @@ fun SettingsScreenPreview() {
         onPrivacyPolicyClick = {},
         onTermsOfServiceClick = {},
         onInviteFriendsClick = {},
-        onBuyCoffeeClick = {},
+        onKoFiClick = {},
         onBuyUnlimited = {},
         onRestorePurchases = {},
         limitedSheepEnabled = false,
