@@ -1,6 +1,8 @@
 package com.skooldev.shweep
 
 object AppLinks {
+
+    const val WEB = "https://shweep.lol"
     const val PRIVACY_POLICY = "https://shweep.lol/privacy/"
     const val TERMS_OF_SERVICE = "https://shweep.lol/terms/"
     const val KO_FI = "https://ko-fi.com/skooldev"
@@ -9,7 +11,7 @@ object AppLinks {
 
     val inviteMessage: String
         get() = """
-            Try Shweep!
+            Try Shweep! $WEB
 
             Android: $GOOGLE_PLAY
             iPhone/iPad: $APP_STORE
