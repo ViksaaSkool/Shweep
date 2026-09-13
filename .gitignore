@@ -17,3 +17,15 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# Monetization (future): Firebase/RevenueCat config and secrets are generated
+# from CI secrets for enabled builds and must never be committed.
+google-services.json
+GoogleService-Info.plist
+**/google-services.json
+**/GoogleService-Info.plist
+**/monetization/generated/
+.env
+*.p8
+serviceAccountKey.json
+firebase-adminsdk-*.json

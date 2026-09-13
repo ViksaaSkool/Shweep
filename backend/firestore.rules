@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Shweep monetization backend rules.
+//
+// All quota and entitlement state is server-owned. Clients may only read their
+// own user/installation documents and may write nothing authoritative.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /installations/{installationId} {
+      allow read: if signedIn();
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /entitlements/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false; // RevenueCat webhook via Admin SDK only
+    }
+
+    match /quotaPeriods/{docId} {
+      allow read: if signedIn();
+      allow write: if false; // atomic consumeSheep transactions only
+    }
+
+    match /quotaRequests/{docId} {
+      allow read, write: if false;
+    }
+
+    match /revenueCatEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
