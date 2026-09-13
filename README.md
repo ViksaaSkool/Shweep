@@ -29,7 +29,7 @@ The current version of the app is part of the talk [for Droidcon Lisbon 26](http
 
 For context first go through [legacy documentation](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg#documentation) of the app and look into the [PLAN](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PLAN.md), [SETUP](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/SETUP.md) and [PROMPTS](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PROMPTS.md)
 
-The development history of the current version is documented in [PROMPTS.md](PROMPTS.md), based on the prompt captures in `art/prompts/`.
+The development history of the current version is documented in [PROMPTS.md](PROMPTS.md), based on the prompt captures in `art/prompts/`. The Google Play and App Store listing graphics were designed with [Pen.dev](https://www.pen.dev/) — see [STORE_DESIGNS.md](STORE_DESIGNS.md).
 
 # Features
 
