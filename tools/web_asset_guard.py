@@ -42,7 +42,8 @@ FORBIDDEN_NAME_MARKERS = ("landing-loop", "landing-poster", "landing_background"
 # Media extensions whose bytes are hash-compared against art/ and docs/.
 MEDIA_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4", ".webm"}
 
-# Workflow that publishes the website.
+# Optional Actions workflow that publishes the website. It is not required:
+# the live site uses GitHub Pages branch publishing from `main` / `/docs`.
 PAGES_WORKFLOW = ".github/workflows/pages.yml"
 
 # Directories and files to skip while walking.
@@ -222,11 +223,11 @@ def check_pages(root: Path = REPO_ROOT) -> int:
                     f"docs page references path outside docs/: {_rel(root, f)} -> {ref}"
                 )
 
-    # The Pages workflow must upload exactly docs/.
+    # The site is published from `main` / `/docs` using GitHub Pages branch
+    # publishing, so a deployment workflow is optional. If an Actions
+    # deployment workflow IS present, it must upload exactly docs/.
     workflow = root / PAGES_WORKFLOW
-    if not workflow.is_file():
-        violations.append(f"missing Pages workflow: {PAGES_WORKFLOW}")
-    else:
+    if workflow.is_file():
         try:
             text = workflow.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -321,7 +322,11 @@ def _report(violations, ok_message: str) -> int:
 
 
 def _make_sandbox(root: Path):
-    """Create a minimal repository skeleton for self-test fixtures."""
+    """Create a minimal repository skeleton for self-test fixtures.
+
+    No Pages workflow is created: GitHub Pages branch publishing from
+    `main` / `/docs` is the default and must be valid without one.
+    """
     (root / "art").mkdir()
     (root / "art" / "icon.png").write_bytes(b"ART-ICON-BYTES")
     (root / "docs" / "assets").mkdir(parents=True)
@@ -329,16 +334,6 @@ def _make_sandbox(root: Path):
     (root / "docs" / "assets" / "social.png").write_bytes(b"DOCS-SOCIAL-BYTES")
     (root / "composeApp/src/commonMain/kotlin").mkdir(parents=True)
     (root / "iosApp/iosApp").mkdir(parents=True)
-    workflow = root / ".github/workflows/pages.yml"
-    workflow.parent.mkdir(parents=True)
-    workflow.write_text(
-        "jobs:\n"
-        "  deploy:\n"
-        "    steps:\n"
-        "      - uses: actions/upload-pages-artifact@v3\n"
-        "        with:\n"
-        "          path: docs\n"
-    )
 
 
 def self_test() -> int:
@@ -421,8 +416,23 @@ def self_test() -> int:
         expect_failure("docs escape reference", lambda: check_pages(root))
         (root / "docs/index.html").write_text('<a href="assets/social.png">home</a>')
 
-        # 10. Pages workflow uploading something other than docs/.
-        workflow = root / ".github/workflows/pages.yml"
+        # 10. Optional Pages Actions workflow.
+        # No workflow at all (branch publishing) already covered by the clean
+        # baseline above. An Actions workflow uploading docs/ is also fine.
+        workflow_dir = root / ".github/workflows"
+        workflow_dir.mkdir(parents=True, exist_ok=True)
+        workflow = workflow_dir / "pages.yml"
+        workflow.write_text(
+            "jobs:\n"
+            "  deploy:\n"
+            "    steps:\n"
+            "      - uses: actions/upload-pages-artifact@v3\n"
+            "        with:\n"
+            "          path: docs\n"
+        )
+        expect_success("pages workflow uploads docs", lambda: check_pages(root))
+
+        # An Actions workflow uploading something other than docs/ must fail.
         workflow.write_text(
             "jobs:\n"
             "  deploy:\n"
@@ -432,14 +442,8 @@ def self_test() -> int:
             "          path: art\n"
         )
         expect_failure("pages upload path", lambda: check_pages(root))
-        workflow.write_text(
-            "jobs:\n"
-            "  deploy:\n"
-            "    steps:\n"
-            "      - uses: actions/upload-pages-artifact@v3\n"
-            "        with:\n"
-            "          path: docs\n"
-        )
+        workflow.unlink()
+        expect_success("no pages workflow", lambda: check_pages(root))
 
         # 11. Archive containing a renamed copy of an art asset.
         apk = root / "test.apk"
