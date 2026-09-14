@@ -23,6 +23,9 @@ node_modules/
 # Android release signing and Google Cloud credentials (never commit)
 *.jks
 *.keystore
+.local-version
+build-local/
+.env.local
 upload-keystore.jks
 shweep-upload.jks
 gha-creds-*.json

@@ -94,7 +94,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = ciVersionCode ?: 1
-        versionName = ciVersionName ?: "1.0"
+        versionName = ciVersionName ?: "1.0.0"
     }
     packaging {
         resources {
