@@ -41,7 +41,7 @@ The agent **Leonardo (GPT-5.6 Sol)** replies that it will build a coordinated st
 
 ### `15.png` — First generated set
 
-The agent (**Bash**) has produced the first pass: three phone mockups (the Start screen with its action menu, the Settings screen including "Support me on Ko-fi", and the Sleepstory screen) plus the wide **Google Play Feature Graphic**.
+The agent (**Bash**) has produced the first pass: three phone mockups (the Start screen with its action menu, the Settings screen, and the Sleepstory screen) plus the wide **Google Play Feature Graphic**.
 
 The Sleepstory screen is attached with the prompt:
 
@@ -78,7 +78,7 @@ The finished canvas: **five App Store assets, five Google Play assets, and the u
 | 01 | Sleep comes softly. | Start screen |
 | 02 | Two ways to drift away. | Sleep session options |
 | 03 | Make bedtime yours. | Settings, sheep color, support |
-| 04 | See your wind-down rhythm. | Sleepstory session history |
+| 04 | See your wind-down rhythm. | Locally stored session history |
 | 05 | Let the day drift away. | Active counting screen |
 
 **Google Play screenshots** (portrait)
@@ -88,7 +88,7 @@ The finished canvas: **five App Store assets, five Google Play assets, and the u
 | 01 | Drift off, naturally. | Start screen |
 | 02 | Tap into calm. | Sleep session options |
 | 03 | Pick your sleepy sidekick. | Sheep color |
-| 04 | See your wind-down rhythm. | Sleepstory session history |
+| 04 | See your wind-down rhythm. | Locally stored session history |
 | 05 | Count sheep. Quiet your mind. | Active counting screen |
 
 **Google Play feature graphic** (wide banner)
@@ -101,4 +101,4 @@ The finished canvas: **five App Store assets, five Google Play assets, and the u
 
 - The captures in `art/prompts/` document the creation process; they are repository source artwork and are not part of the app or website builds.
 - The store listing assets themselves are uploaded to Google Play Console and App Store Connect, not committed to this repository.
-- The Sleepstory assets were revised for accuracy: Sleepstory is counting-session history, not bedtime stories, and the graphics no longer claim the app measures time to sleep. Any "soothing stories" or "time to sleep" wording still visible in the `art/prompts/` captures is the pre-revision copy.
+- The Session history assets were revised for accuracy: Session history is counting-session history, not bedtime stories, and the graphics no longer claim the app measures time to sleep. Any "soothing stories" or "time to sleep" wording still visible in the `art/prompts/` captures is the pre-revision copy.

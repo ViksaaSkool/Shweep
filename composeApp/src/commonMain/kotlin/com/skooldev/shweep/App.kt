@@ -133,9 +133,6 @@ fun App(
                     onInviteFriendsClick = {
                         shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
-                    onKoFiClick = {
-                        uriHandler.openUri(AppLinks.KO_FI)
-                    },
                     limitedSheepEnabled = limitedSheepEnabled,
                     onBack = { currentScreen = Screen.Start }
                 )

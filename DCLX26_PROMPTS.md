@@ -106,4 +106,4 @@ It follows the same structure as the [legacy documentation](https://github.com/V
 
 - The captures show the mix of plan mode and build mode used across the session, and the different models and agents involved.
 - Prompt captures are stored as `art/prompts/1.png` through `art/prompts/13.png` and are repository source artwork — they are not part of the app or website builds.
-- Prompt 3 originally described the support action as “Buy the developer a coffee”. The current implementation links to Ko-fi instead, using the official Ko-fi cup mark and the “Support me on Ko-fi” label.
+- Prompt 3 originally described a support action as “Buy the developer a coffee”. That support action was later removed from the app entirely.
