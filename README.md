@@ -38,7 +38,7 @@ The development history of the current version is documented in [DCLX26_PROMPTS.
 - 🌗 **Grayscale Wind-Down**: As your swiping slows down, the counting scene gradually loses color. A successful swipe brings the color back, and the Start screen always stays fully colored.
 - 📖 **Sleepstory (Redesigned History)**: A graphical summary with the average wind-down time, a duration arc, and a mini sheep flock, plus per-session cards showing when you started, how long you counted, and how many sheep you counted.
 - 🎨 **Sheep Color Choice**: Pick white or black sheep in Settings. Black sheep also switches the Start screen to the dark night background, and a first-launch, non-dismissable dialog makes the initial choice.
-- ⚙️ **Settings**: Sheep color, Privacy Policy, Terms of Service, Support the developer on Ko-fi, and Invite friends. Changes apply only when you tap Save.
+- ⚙️ **Settings**: Sheep color, Privacy Policy, Terms of Service, and Invite friends. Changes apply only when you tap Save.
 - ⏱️ **Session Tracking**: A session starts on “Go to sleep”, is checkpointed locally, ends after roughly 10 seconds in the background, and is recovered if the app is closed mid-session.
 - 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend.
 - 🐏 **Daily Sheep Allowance** *(feature-flagged, currently disabled)*: A daily allowance that resets at local noon. The feature is turned off, so the app hands out unlimited sheep. This version has no in-app purchases.
