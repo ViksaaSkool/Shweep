@@ -13,10 +13,6 @@ import com.skooldev.shweep.data.SettingsRepositoryImpl
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.data.createDataStore
 import com.skooldev.shweep.data.toArtwork
-import com.skooldev.shweep.purchase.DisabledStorePurchaseGateway
-import com.skooldev.shweep.purchase.MockStorePurchaseGateway
-import com.skooldev.shweep.purchase.StorePurchaseGateway
-import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseManager
 import com.skooldev.shweep.screens.CountingSheepScreen
 import com.skooldev.shweep.screens.HistoryScreen
 import com.skooldev.shweep.screens.SettingsScreen
@@ -36,7 +32,6 @@ enum class Screen {
 @Suppress("DEPRECATION")
 @Composable
 fun App(
-    purchaseGateway: StorePurchaseGateway,
     visibilityMonitor: AppVisibilityMonitor
 ) {
     MaterialTheme {
@@ -48,11 +43,6 @@ fun App(
         val settingsRepository = remember(dataStore) { SettingsRepositoryImpl(dataStore) }
         val dailySheepQuotaRepository = remember(dataStore) { DailySheepQuotaRepositoryImpl(dataStore) }
 
-        val effectiveGateway = if (limitedSheepEnabled) purchaseGateway else DisabledStorePurchaseGateway()
-        val purchaseManager = remember(effectiveGateway) {
-            UnlimitedSheepPurchaseManager(effectiveGateway)
-        }
-        val purchaseState by purchaseManager.state.collectAsState()
         val scope = rememberCoroutineScope()
         val uriHandler = LocalUriHandler.current
 
@@ -89,23 +79,6 @@ fun App(
             }
         }
 
-        DisposableEffect(purchaseManager, limitedSheepEnabled) {
-            if (limitedSheepEnabled) {
-                purchaseManager.start()
-            }
-            onDispose {
-                if (limitedSheepEnabled) {
-                    purchaseManager.stop()
-                }
-            }
-        }
-
-        LaunchedEffect(limitedSheepEnabled, purchaseState.isPurchased) {
-            if (!limitedSheepEnabled || purchaseState.isPurchased) {
-                // Clear any stale exhausted state when feature is off or user buys
-            }
-        }
-
         val selectedColor by settingsRepository.sheepColor.collectAsState(
             initial = SheepColor.WHITE
         )
@@ -134,9 +107,6 @@ fun App(
                     sessionRepository = sessionRepository,
                     dailySheepQuotaRepository = dailySheepQuotaRepository,
                     limitedSheepEnabled = limitedSheepEnabled,
-                    purchaseState = purchaseState,
-                    onPurchase = { purchaseManager.purchase() },
-                    onRestore = { purchaseManager.restore() },
                     sheepArtwork = selectedColor.toArtwork(),
                     coordinator = coordinator
                 )
@@ -166,10 +136,7 @@ fun App(
                     onKoFiClick = {
                         uriHandler.openUri(AppLinks.KO_FI)
                     },
-                    onBuyUnlimited = { purchaseManager.purchase() },
-                    onRestorePurchases = { purchaseManager.restore() },
                     limitedSheepEnabled = limitedSheepEnabled,
-                    purchaseState = purchaseState,
                     onBack = { currentScreen = Screen.Start }
                 )
             }
@@ -205,7 +172,6 @@ private class NoOpVisibilityMonitor : AppVisibilityMonitor {
 fun AppPreview() {
     MaterialTheme {
         App(
-            purchaseGateway = MockStorePurchaseGateway(),
             visibilityMonitor = NoOpVisibilityMonitor()
         )
     }

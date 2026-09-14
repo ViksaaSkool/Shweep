@@ -38,7 +38,6 @@ import com.skooldev.shweep.data.MockSessionRepository
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.data.SheepAccessMode
 import com.skooldev.shweep.data.resolveSheepAccessMode
-import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseState
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
@@ -63,14 +62,11 @@ fun CountingSheepScreen(
     sessionRepository: SessionRepository,
     dailySheepQuotaRepository: DailySheepQuotaRepository,
     limitedSheepEnabled: Boolean,
-    purchaseState: UnlimitedSheepPurchaseState,
-    onPurchase: () -> Unit,
-    onRestore: () -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
     coordinator: CountingSessionCoordinator
 ) {
-    val accessMode = remember(limitedSheepEnabled, purchaseState.entitlement) {
-        resolveSheepAccessMode(limitedSheepEnabled, purchaseState.entitlement)
+    val accessMode = remember(limitedSheepEnabled) {
+        resolveSheepAccessMode(limitedSheepEnabled)
     }
     var sheepCount by remember { mutableStateOf(0) }
     var screenSize by remember { mutableStateOf(Size.Zero) }
@@ -428,8 +424,8 @@ fun CountingSheepScreen(
         }
     }
 
-    LaunchedEffect(limitedSheepEnabled, purchaseState.isPurchased) {
-        if (!limitedSheepEnabled || purchaseState.isPurchased) {
+    LaunchedEffect(limitedSheepEnabled) {
+        if (!limitedSheepEnabled) {
             exhaustedQuota = null
         }
     }
@@ -438,9 +434,6 @@ fun CountingSheepScreen(
         if (accessMode == SheepAccessMode.LIMITED) {
             OutOfSheepDialog(
                 nextResetEpochMillis = quota.nextResetEpochMillis,
-                purchaseState = purchaseState,
-                onPurchase = onPurchase,
-                onRestore = onRestore,
                 onDismiss = { exhaustedQuota = null },
                 onResetReached = {
                     exhaustedQuota = null
@@ -532,9 +525,6 @@ fun CountingSheepScreenPreview() {
         sessionRepository = MockSessionRepository(),
         dailySheepQuotaRepository = MockDailySheepQuotaRepository(),
         limitedSheepEnabled = false,
-        purchaseState = UnlimitedSheepPurchaseState(),
-        onPurchase = {},
-        onRestore = {},
         coordinator = CountingSessionCoordinator(
             sessionRepository = MockSessionRepository(),
             scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main)

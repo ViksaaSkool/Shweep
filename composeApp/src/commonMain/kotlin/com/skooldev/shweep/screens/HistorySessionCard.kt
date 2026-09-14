@@ -61,7 +61,7 @@ internal fun HistorySessionCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                // Time to sleep metric
+                // Wind-down time metric
                 Column(
                     modifier = Modifier
                         .weight(1f)
