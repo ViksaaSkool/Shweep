@@ -155,6 +155,16 @@ versionName = ANDROID_VERSION_NAME_PREFIX + "." + github.run_number
 
 ## 8. Building a signed AAB locally
 
+For day-to-day local builds use [BUILD_LOCAL_ANDROID.md](BUILD_LOCAL_ANDROID.md):
+
+```bash
+./tools/build-local-aab.sh v-1.0.7
+```
+
+It reads signing values as `environment variable → local.properties → secure prompt`, auto-increments `versionCode`, and copies the verified bundle to `build-local/Shweep_<versionName>.aab`.
+
+The equivalent manual flow is:
+
 ```bash
 export ANDROID_KEYSTORE_PATH="$PWD/shweep-upload.jks"
 export ANDROID_UPLOAD_STORE_PASSWORD='...'
