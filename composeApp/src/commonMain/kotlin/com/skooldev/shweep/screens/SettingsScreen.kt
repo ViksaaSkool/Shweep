@@ -33,9 +33,6 @@ import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
-import com.skooldev.shweep.purchase.EntitlementState
-import com.skooldev.shweep.purchase.PurchaseOperation
-import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseState
 
 @Composable
 fun SettingsScreen(
@@ -45,10 +42,7 @@ fun SettingsScreen(
     onTermsOfServiceClick: () -> Unit,
     onInviteFriendsClick: () -> Unit,
     onKoFiClick: () -> Unit,
-    onBuyUnlimited: () -> Unit,
-    onRestorePurchases: () -> Unit,
     limitedSheepEnabled: Boolean,
-    purchaseState: UnlimitedSheepPurchaseState,
     onBack: () -> Unit
 ) {
     var pendingColor by remember { mutableStateOf(selectedColor) }
@@ -206,79 +200,11 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(Dimens.cardPaddingLarge)) {
                         Text(
-                            text = Strings.UNLIMITED_SHEEP_TITLE,
+                            text = Strings.UNLIMITED_SHEEP_COMING_SOON,
                             fontSize = Dimens.fontSizeMedium,
                             fontWeight = FontWeight.Medium,
                             color = AppColors.TextSecondary
                         )
-
-                        Spacer(modifier = Modifier.height(Dimens.spacingSmall))
-
-                        if (purchaseState.isPurchased) {
-                            Text(
-                                text = Strings.UNLIMITED_SHEEP_ACTIVE,
-                                fontSize = Dimens.fontSizeLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = AppColors.TextPrimary
-                            )
-                        } else {
-                            Text(
-                                text = Strings.UNLIMITED_SHEEP_DESCRIPTION_DETAIL,
-                                fontSize = Dimens.fontSizeSmall,
-                                color = AppColors.TextMuted,
-                                lineHeight = Dimens.lineHeightMedium
-                            )
-
-                            Spacer(modifier = Modifier.height(Dimens.spacingLarge))
-
-                            val buyText = when {
-                                purchaseState.operation == PurchaseOperation.PURCHASING -> Strings.UNLIMITED_SHEEP_PURCHASING
-                                purchaseState.operation == PurchaseOperation.RESTORING -> Strings.UNLIMITED_SHEEP_RESTORING
-                                purchaseState.entitlement == EntitlementState.CHECKING -> Strings.UNLIMITED_SHEEP_PURCHASE_LOADING
-                                purchaseState.entitlement == EntitlementState.UNAVAILABLE -> Strings.UNLIMITED_SHEEP_UNAVAILABLE
-                                purchaseState.isProductLoaded -> "${Strings.UNLIMITED_SHEEP_PURCHASE_TITLE} · ${purchaseState.product!!.localizedPrice}"
-                                else -> Strings.UNLIMITED_SHEEP_PURCHASE_LOADING
-                            }
-
-                            Button(
-                                onClick = onBuyUnlimited,
-                                enabled = purchaseState.canBuy && purchaseState.operation == PurchaseOperation.IDLE,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(Dimens.buttonHeight),
-                                shape = RoundedCornerShape(Dimens.buttonCornerRadius),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AppColors.Primary
-                                )
-                            ) {
-                                Text(
-                                    text = buyText,
-                                    fontSize = Dimens.fontSizeLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(Dimens.spacingMedium))
-
-                            OutlinedButton(
-                                onClick = onRestorePurchases,
-                                enabled = purchaseState.operation == PurchaseOperation.IDLE,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(Dimens.buttonHeight),
-                                shape = RoundedCornerShape(Dimens.buttonCornerRadius),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = AppColors.ButtonBackgroundAlpha
-                                )
-                            ) {
-                                Text(
-                                    text = "Restore purchases",
-                                    fontSize = Dimens.fontSizeLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = AppColors.TextPrimary
-                                )
-                            }
-                        }
                     }
                 }
 
@@ -381,10 +307,7 @@ fun SettingsScreenPreview() {
         onTermsOfServiceClick = {},
         onInviteFriendsClick = {},
         onKoFiClick = {},
-        onBuyUnlimited = {},
-        onRestorePurchases = {},
         limitedSheepEnabled = false,
-        purchaseState = UnlimitedSheepPurchaseState(),
         onBack = {}
     )
 }

@@ -64,7 +64,7 @@ internal fun HistorySummaryCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${summary.totalNights} nights",
+                        text = Strings.HISTORY_TOTAL_NIGHTS.replace("%d", summary.totalNights.toString()),
                         fontSize = Dimens.fontSizeLarge,
                         fontWeight = FontWeight.Medium,
                         color = AppColors.TextPrimary
@@ -75,7 +75,7 @@ internal fun HistorySummaryCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${summary.averageSheepCount} avg sheep",
+                        text = Strings.HISTORY_AVERAGE_SHEEP.replace("%d", summary.averageSheepCount.toString()),
                         fontSize = Dimens.fontSizeLarge,
                         fontWeight = FontWeight.Medium,
                         color = AppColors.TextPrimary
