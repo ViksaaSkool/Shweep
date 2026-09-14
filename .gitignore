@@ -28,3 +28,4 @@ shweep-upload.jks
 gha-creds-*.json
 serviceAccountKey.json
 firebase-adminsdk-*.json
+/STORE_NOTES.md
