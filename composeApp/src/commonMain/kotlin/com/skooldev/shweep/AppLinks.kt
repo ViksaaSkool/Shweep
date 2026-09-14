@@ -11,9 +11,6 @@ object AppLinks {
 
     val inviteMessage: String
         get() = """
-            Try Shweep! $WEB
-
-            Android: $GOOGLE_PLAY
-            iPhone/iPad: $APP_STORE
+            Try Shweep and go to sleep like your ancestors: $WEB
         """.trimIndent()
 }

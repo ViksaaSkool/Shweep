@@ -19,3 +19,14 @@ captures
 node_modules/
 /art/shweep.pen
 /art/exports/*
+
+# Android release signing and Google Cloud credentials (never commit)
+*.jks
+*.keystore
+upload-keystore.jks
+shweep-upload.jks
+gha-creds-*.json
+serviceAccountKey.json
+firebase-adminsdk-*.json
+/STORE_NOTES.md
+/art/assets/

@@ -71,15 +71,16 @@ fun HistoryScreen(
         // Content
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .systemBarsPadding()
-                    .padding(Dimens.screenPadding),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(Dimens.screenPadding)
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = Strings.SETTINGS_CLOSE,
@@ -89,22 +90,25 @@ fun HistoryScreen(
 
                 Surface(
                     modifier = Modifier
-                        .width(Dimens.titlePillWidth)
+                        .align(Alignment.Center)
+                        .widthIn(min = Dimens.titlePillWidth)
                         .height(Dimens.titlePillHeight),
                     shape = RoundedCornerShape(Dimens.titlePillCornerRadius),
                     color = AppColors.TitlePillAlpha
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.padding(horizontal = Dimens.spacingLarge)
+                    ) {
                         Text(
                             text = Strings.HISTORY_TITLE,
-                            fontSize = Dimens.fontSizeXXXLarge,
+                            fontSize = Dimens.fontSizeXXLarge,
                             fontWeight = FontWeight.Bold,
-                            color = AppColors.TextPrimary
+                            color = AppColors.TextPrimary,
+                            maxLines = 1
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.size(48.dp))
             }
 
             // Scrollable content

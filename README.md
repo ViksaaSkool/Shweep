@@ -2,7 +2,7 @@
 
 ![icon.png](art/icon.png)
 
-Go to sleep like your ancestors did with a proven method and stop doom scrolling! 
+Go to sleep like your ancestors did with a traditional sheep-counting ritual designed to help you wind down — and stop doom scrolling! 
 Now with Shweep **(Sheep, Sleep, Swipe)** you can swipe sheep and go to sleep. 
 Technology meets tradition.
 
@@ -29,19 +29,19 @@ The current version of the app is part of the talk [for Droidcon Lisbon 26](http
 
 For context first go through [legacy documentation](https://github.com/ViksaaSkool/Shweep/tree/feature/devbg#documentation) of the app and look into the [PLAN](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PLAN.md), [SETUP](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/SETUP.md) and [PROMPTS](https://github.com/ViksaaSkool/Shweep/blob/feature/devbg/PROMPTS.md)
 
-The development history of the current version is documented in [PROMPTS.md](PROMPTS.md), based on the prompt captures in `art/prompts/`. The Google Play and App Store listing graphics were designed with [Pen.dev](https://www.pen.dev/) — see [STORE_DESIGNS.md](STORE_DESIGNS.md).
+The development history of the current version is documented in [DCLX26_PROMPTS.md](DCLX26_PROMPTS.md), based on the prompt captures in `art/prompts/`. The Google Play and App Store listing graphics were designed with [Pen.dev](https://www.pen.dev/) — see [STORE_DESIGNS.md](STORE_DESIGNS.md).
 
 # Features
 
 - 🐑 **Interactive Sheep Meadow**: Swipe up to flick a sheep into the meadow, or drag and drop one where you want it. Sheep move with a physics-based zig-zag, collide with each other, and drift away after 10–15 seconds so the meadow never overcrowds.
 - 🦵 **Layered, Animated Sheep**: Each sheep is drawn from separate body and leg bitmaps, so the legs actually step while the sheep walk and the body bobs with the gait.
 - 🌗 **Grayscale Wind-Down**: As your swiping slows down, the counting scene gradually loses color. A successful swipe brings the color back, and the Start screen always stays fully colored.
-- 📖 **Sleepstory (Redesigned History)**: A graphical summary with the average time to sleep, a duration arc, and a mini sheep flock, plus per-night cards showing when you started, how long it took, and how many sheep you counted.
+- 📖 **Sleepstory (Redesigned History)**: A graphical summary with the average wind-down time, a duration arc, and a mini sheep flock, plus per-session cards showing when you started, how long you counted, and how many sheep you counted.
 - 🎨 **Sheep Color Choice**: Pick white or black sheep in Settings. Black sheep also switches the Start screen to the dark night background, and a first-launch, non-dismissable dialog makes the initial choice.
 - ⚙️ **Settings**: Sheep color, Privacy Policy, Terms of Service, Support the developer on Ko-fi, and Invite friends. Changes apply only when you tap Save.
 - ⏱️ **Session Tracking**: A session starts on “Go to sleep”, is checkpointed locally, ends after roughly 10 seconds in the background, and is recovered if the app is closed mid-session.
 - 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend.
-- 🐏 **Daily Sheep Allowance + Unlimited Sheep** *(feature-flagged)*: A daily allowance that resets at local noon, and an optional one-time purchase to remove it. Currently disabled, so the app hands out unlimited sheep.
+- 🐏 **Daily Sheep Allowance** *(feature-flagged, currently disabled)*: A daily allowance that resets at local noon. The feature is turned off, so the app hands out unlimited sheep. This version has no in-app purchases.
 - 📲 **Cross-Platform**: One Kotlin Multiplatform / Compose Multiplatform codebase for Android and iOS.
 - 🌐 **Legal Pages**: Privacy Policy and Terms of Service published on GitHub Pages at [shweep.lol](https://shweep.lol/).
 

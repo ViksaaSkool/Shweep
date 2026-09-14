@@ -1,23 +1,14 @@
 package com.skooldev.shweep.data
 
-import com.skooldev.shweep.purchase.EntitlementState
-
 enum class SheepAccessMode {
     UNLIMITED,
-    LIMITED,
-    VERIFYING_PURCHASE
+    LIMITED
 }
 
 fun resolveSheepAccessMode(
-    limitedSheepEnabled: Boolean,
-    entitlement: EntitlementState
+    limitedSheepEnabled: Boolean
 ): SheepAccessMode {
     if (!limitedSheepEnabled) return SheepAccessMode.UNLIMITED
 
-    return when (entitlement) {
-        EntitlementState.PURCHASED -> SheepAccessMode.UNLIMITED
-        EntitlementState.CHECKING -> SheepAccessMode.VERIFYING_PURCHASE
-        EntitlementState.NOT_PURCHASED -> SheepAccessMode.LIMITED
-        EntitlementState.UNAVAILABLE -> SheepAccessMode.LIMITED
-    }
+    return SheepAccessMode.LIMITED
 }
