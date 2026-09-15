@@ -39,6 +39,8 @@ concurrency:
 
 jobs:
   publish:
+    # Disabled: set to true to resume Play uploads.
+    if: false
     runs-on: ubuntu-latest
     environment: google-play-internal
 
