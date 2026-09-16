@@ -8,8 +8,8 @@ OUT_DIR = SRC_DIR
 TMP_DIR = "/var/folders/7_/_9drmdh96h1f0b28q0kg7syh0000gn/T/opencode/sheep_split"
 
 VARIANTS = {
-    "white": os.path.join(SRC_DIR, "sheep.png"),
-    "black": os.path.join(SRC_DIR, "black_sheep.png"),
+    "white": os.path.join(SRC_DIR, "sheep.webp"),
+    "black": os.path.join(SRC_DIR, "black_sheep.webp"),
 }
 
 # Generous search windows per leg (source coords, 1024-space); tightened later.
