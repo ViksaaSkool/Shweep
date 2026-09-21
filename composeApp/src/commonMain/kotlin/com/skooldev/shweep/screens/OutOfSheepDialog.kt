@@ -14,6 +14,10 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import com.skooldev.shweep.FeatureFlags
+import com.skooldev.shweep.purchase.EntitlementState
+import com.skooldev.shweep.purchase.PurchaseOperation
+import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseState
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.Strings
@@ -22,6 +26,9 @@ import com.skooldev.shweep.ui.theme.Strings
 @Composable
 fun OutOfSheepDialog(
     nextResetEpochMillis: Long,
+    purchaseState: UnlimitedSheepPurchaseState,
+    onPurchase: () -> Unit,
+    onRestore: () -> Unit,
     onDismiss: () -> Unit,
     onResetReached: () -> Unit
 ) {
@@ -63,19 +70,22 @@ fun OutOfSheepDialog(
                 modifier = Modifier.padding(Dimens.dialogPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = Strings.OUT_OF_SHEEP_TITLE,
                         fontSize = Dimens.fontSizeXXLarge,
                         fontWeight = FontWeight.Bold,
-                        color = AppColors.TextPrimary
+                        color = AppColors.TextPrimary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
                     )
 
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
                         Text(
                             text = Strings.HISTORY_CLOSE,
                             fontSize = Dimens.fontSizeXLarge,
@@ -93,6 +103,17 @@ fun OutOfSheepDialog(
                     textAlign = TextAlign.Center,
                     lineHeight = Dimens.lineHeightMedium
                 )
+
+                if (FeatureFlags.LOCAL_TEST_MODE) {
+                    Spacer(modifier = Modifier.height(Dimens.spacingSmall))
+
+                    Text(
+                        text = Strings.LOCAL_TEST_MODE_MARKER,
+                        fontSize = Dimens.fontSizeSmall,
+                        color = AppColors.TextMuted,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(Dimens.spacingXXLarge))
 
@@ -125,6 +146,76 @@ fun OutOfSheepDialog(
 
                 Spacer(modifier = Modifier.height(Dimens.spacingXXLarge))
 
+                val buyButtonText = when {
+                    purchaseState.operation == PurchaseOperation.PURCHASING -> Strings.UNLIMITED_SHEEP_PURCHASING
+                    purchaseState.operation == PurchaseOperation.RESTORING -> Strings.UNLIMITED_SHEEP_RESTORING
+                    purchaseState.entitlement == EntitlementState.CHECKING -> Strings.UNLIMITED_SHEEP_PURCHASE_LOADING
+                    purchaseState.entitlement == EntitlementState.UNAVAILABLE -> Strings.UNLIMITED_SHEEP_UNAVAILABLE
+                    purchaseState.isProductLoaded -> "${Strings.UNLIMITED_SHEEP_PURCHASE_TITLE} · ${purchaseState.product!!.localizedPrice}"
+                    else -> Strings.UNLIMITED_SHEEP_PURCHASE_LOADING
+                }
+
+                Button(
+                    onClick = onPurchase,
+                    enabled = purchaseState.canBuy && purchaseState.operation == PurchaseOperation.IDLE,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.buttonHeight),
+                    shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.Primary,
+                        disabledContainerColor = AppColors.Primary.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Text(
+                        text = buyButtonText,
+                        fontSize = Dimens.fontSizeLarge,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Dimens.spacingMedium))
+
+                OutlinedButton(
+                    onClick = onRestore,
+                    enabled = purchaseState.operation == PurchaseOperation.IDLE &&
+                        purchaseState.entitlement != EntitlementState.CHECKING,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.buttonHeight),
+                    shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = AppColors.ButtonBackgroundAlpha
+                    )
+                ) {
+                    Text(
+                        text = if (purchaseState.operation == PurchaseOperation.RESTORING) {
+                            Strings.UNLIMITED_SHEEP_RESTORING
+                        } else {
+                            Strings.RESTORE_PURCHASES
+                        },
+                        fontSize = Dimens.fontSizeLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.TextPrimary
+                    )
+                }
+
+                purchaseState.errorMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(Dimens.spacingMedium))
+
+                    Text(
+                        text = message,
+                        fontSize = Dimens.fontSizeSmall,
+                        color = AppColors.TextMuted,
+                        textAlign = TextAlign.Center,
+                        lineHeight = Dimens.lineHeightMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Dimens.spacingSmall))
+
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier
@@ -155,6 +246,9 @@ fun OutOfSheepDialog(
 fun OutOfSheepDialogPreview() {
     OutOfSheepDialog(
         nextResetEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
+        purchaseState = UnlimitedSheepPurchaseState(),
+        onPurchase = {},
+        onRestore = {},
         onDismiss = {},
         onResetReached = {}
     )

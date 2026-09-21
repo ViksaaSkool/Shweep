@@ -31,5 +31,7 @@ shweep-upload.jks
 gha-creds-*.json
 serviceAccountKey.json
 firebase-adminsdk-*.json
+*.p8
+*.p12
 /STORE_NOTES.md
 /art/assets/

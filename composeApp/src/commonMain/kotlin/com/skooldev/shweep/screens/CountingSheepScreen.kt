@@ -38,6 +38,7 @@ import com.skooldev.shweep.data.MockSessionRepository
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.data.SheepAccessMode
 import com.skooldev.shweep.data.resolveSheepAccessMode
+import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseState
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
@@ -62,11 +63,15 @@ fun CountingSheepScreen(
     sessionRepository: SessionRepository,
     dailySheepQuotaRepository: DailySheepQuotaRepository,
     limitedSheepEnabled: Boolean,
+    purchaseState: UnlimitedSheepPurchaseState,
+    onPurchase: () -> Unit,
+    onRestore: () -> Unit,
+    onPaywallShown: (Long) -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
     coordinator: CountingSessionCoordinator
 ) {
-    val accessMode = remember(limitedSheepEnabled) {
-        resolveSheepAccessMode(limitedSheepEnabled)
+    val accessMode = remember(limitedSheepEnabled, purchaseState.entitlement) {
+        resolveSheepAccessMode(limitedSheepEnabled, purchaseState.entitlement)
     }
     var sheepCount by remember { mutableStateOf(0) }
     var screenSize by remember { mutableStateOf(Size.Zero) }
@@ -163,10 +168,16 @@ fun CountingSheepScreen(
                         sheepCount++
                         coordinator.recordSuccess(sample, elapsedMillis)
                         coordinator.incrementSheep()
+
+                        if (result.quota.isExhausted) {
+                            exhaustedQuota = result.quota
+                            onPaywallShown(result.quota.paywallShownAtEpochMillis)
+                        }
                     }
                     is ConsumeSheepResult.Exhausted -> {
                         coordinator.recordAttempt(sample, elapsedMillis)
                         exhaustedQuota = result.quota
+                        onPaywallShown(result.quota.paywallShownAtEpochMillis)
                     }
                 }
             }
@@ -424,16 +435,29 @@ fun CountingSheepScreen(
         }
     }
 
-    LaunchedEffect(limitedSheepEnabled) {
-        if (!limitedSheepEnabled) {
+    LaunchedEffect(accessMode) {
+        if (accessMode == SheepAccessMode.UNLIMITED) {
             exhaustedQuota = null
         }
     }
 
+    LaunchedEffect(accessMode) {
+        if (accessMode != SheepAccessMode.UNLIMITED) {
+            val quota = dailySheepQuotaRepository.refresh()
+            if (quota.isExhausted) {
+                exhaustedQuota = quota
+                onPaywallShown(quota.paywallShownAtEpochMillis)
+            }
+        }
+    }
+
     exhaustedQuota?.let { quota ->
-        if (accessMode == SheepAccessMode.LIMITED) {
+        if (accessMode != SheepAccessMode.UNLIMITED) {
             OutOfSheepDialog(
                 nextResetEpochMillis = quota.nextResetEpochMillis,
+                purchaseState = purchaseState,
+                onPurchase = onPurchase,
+                onRestore = onRestore,
                 onDismiss = { exhaustedQuota = null },
                 onResetReached = {
                     exhaustedQuota = null
@@ -525,6 +549,10 @@ fun CountingSheepScreenPreview() {
         sessionRepository = MockSessionRepository(),
         dailySheepQuotaRepository = MockDailySheepQuotaRepository(),
         limitedSheepEnabled = false,
+        purchaseState = UnlimitedSheepPurchaseState(),
+        onPurchase = {},
+        onRestore = {},
+        onPaywallShown = {},
         coordinator = CountingSessionCoordinator(
             sessionRepository = MockSessionRepository(),
             scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main)

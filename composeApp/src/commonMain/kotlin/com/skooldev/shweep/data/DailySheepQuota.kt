@@ -2,12 +2,12 @@ package com.skooldev.shweep.data
 
 data class DailySheepQuota(
     val dailyLimit: Int,
-    val usedToday: Int,
-    val periodStartEpochMillis: Long,
+    val usedInWindow: Int,
+    val paywallShownAtEpochMillis: Long,
     val nextResetEpochMillis: Long
 ) {
     val remaining: Int
-        get() = (dailyLimit - usedToday).coerceAtLeast(0)
+        get() = (dailyLimit - usedInWindow).coerceAtLeast(0)
 
     val isExhausted: Boolean
         get() = remaining == 0

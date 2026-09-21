@@ -40,8 +40,8 @@ The development history of the current version is documented in [DCLX26_PROMPTS.
 - 🎨 **Sheep Color Choice**: Pick white or black sheep in Settings. Black sheep also switches the Start screen to the dark night background, and a first-launch, non-dismissable dialog makes the initial choice.
 - ⚙️ **Settings**: Sheep color, Privacy Policy, Terms of Service, and Invite friends. Changes apply only when you tap Save.
 - ⏱️ **Session Tracking**: A session starts on “Go to sleep”, is checkpointed locally, ends after roughly 10 seconds in the background, and is recovered if the app is closed mid-session.
-- 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend.
-- 🐏 **Daily Sheep Allowance** *(feature-flagged, currently disabled)*: A daily allowance that resets at local noon. The feature is turned off, so the app hands out unlimited sheep. This version has no in-app purchases.
+- 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend for your data.
+- 🐏 **Sheep Allowance & Unlimited Sheep**: Count up to 50 free sheep; the flock returns 24 hours later. An optional one-time in-app purchase ("Unlimited Sheep") unlocks unlimited counting forever. Purchase status is managed per device with RevenueCat.
 - 📲 **Cross-Platform**: One Kotlin Multiplatform / Compose Multiplatform codebase for Android and iOS.
 - 🌐 **Legal Pages**: Privacy Policy and Terms of Service published on GitHub Pages at [shweep.lol](https://shweep.lol/).
 

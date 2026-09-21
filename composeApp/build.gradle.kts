@@ -79,9 +79,15 @@ kotlin {
             implementation(libs.okio)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization)
+            implementation(libs.purchases.kmp.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        named { it.lowercase().startsWith("ios") }.configureEach {
+            languageSettings {
+                optIn("kotlinx.cinterop.ExperimentalForeignApi")
+            }
         }
     }
 }

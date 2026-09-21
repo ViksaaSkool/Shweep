@@ -1,5 +1,8 @@
 package com.skooldev.shweep.ui.theme
 
+import com.skooldev.shweep.data.SHEEP_QUOTA_LIMIT
+import com.skooldev.shweep.data.SHEEP_QUOTA_WINDOW_MILLIS
+
 object Strings {
     // App Name
     const val APP_NAME = "Shweep"
@@ -47,11 +50,28 @@ object Strings {
     const val CHOOSE_SHEEP_CONTINUE = "Continue"
 
     // Out of Sheep Dialog
-    const val OUT_OF_SHEEP_TITLE = "No sheep left today"
-    const val OUT_OF_SHEEP_MESSAGE = "You have used all of today's sheep. Your allowance resets at local noon."
-    const val OUT_OF_SHEEP_TIMER_LABEL = "until more sheep arrive"
-    const val UNLIMITED_SHEEP_COMING_SOON = "Unlimited sheep - Coming soon"
-    const val WAIT_UNTIL_RESET = "Wait until reset"
+    const val OUT_OF_SHEEP_TITLE = "No sheep left"
+    const val OUT_OF_SHEEP_MESSAGE = "You've spent all 50 free sheep. Your flock returns in 24 hours, or you can make it unlimited forever."
+    const val OUT_OF_SHEEP_TIMER_LABEL = "until your flock returns"
+    const val WAIT_UNTIL_RESET = "Wait for my flock"
+
+    // Unlimited Sheep Purchase
+    const val UNLIMITED_SHEEP_TITLE = "Unlimited sheep"
+    const val UNLIMITED_SHEEP_STATE_YES = "Yes"
+    const val UNLIMITED_SHEEP_STATE_NO = "No"
+    const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Count as many sheep as you like, whenever you like. Restorable with the same store account."
+    const val UNLIMITED_SHEEP_ACTIVE = "Active forever on this device"
+    const val UNLIMITED_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your winding-down flock - unlimited, forever."
+    const val UNLIMITED_SHEEP_PURCHASE_TITLE = "Buy Unlimited Sheep"
+    const val UNLIMITED_SHEEP_PURCHASE_LOADING = "Loading purchase..."
+    const val UNLIMITED_SHEEP_PURCHASING = "Purchasing..."
+    const val UNLIMITED_SHEEP_RESTORING = "Restoring..."
+    const val UNLIMITED_SHEEP_UNAVAILABLE = "Purchase unavailable"
+    const val RESTORE_PURCHASES = "Restore purchases"
+
+    // Local test mode
+    val LOCAL_TEST_MODE_MARKER: String
+        get() = "Local test mode: $SHEEP_QUOTA_LIMIT sheep / ${SHEEP_QUOTA_WINDOW_MILLIS / 60_000} min"
 
     // History
     const val HISTORY_SUMMARY_TITLE = "Average wind-down time"

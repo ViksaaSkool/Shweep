@@ -2,21 +2,20 @@ package com.skooldev.shweep.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class MockDailySheepQuotaRepository(
-    initialDailyLimit: Int = 100
+    initialDailyLimit: Int = SHEEP_QUOTA_LIMIT
 ) : DailySheepQuotaRepository {
 
     private val _quota = MutableStateFlow(
         DailySheepQuota(
             dailyLimit = initialDailyLimit,
-            usedToday = 0,
-            periodStartEpochMillis = Clock.System.now().toEpochMilliseconds(),
-            nextResetEpochMillis = Clock.System.now().toEpochMilliseconds() + 12 * 3_600_000
+            usedInWindow = 0,
+            paywallShownAtEpochMillis = 0L,
+            nextResetEpochMillis = 0L
         )
     )
 
@@ -29,9 +28,17 @@ class MockDailySheepQuotaRepository(
     override suspend fun tryConsumeSheep(): ConsumeSheepResult {
         val current = _quota.value
         if (current.isExhausted) {
-            return ConsumeSheepResult.Exhausted(current)
+            val locked = if (current.paywallShownAtEpochMillis <= 0L) {
+                current.copy(
+                    paywallShownAtEpochMillis = Clock.System.now().toEpochMilliseconds()
+                )
+            } else {
+                current
+            }
+            _quota.value = locked
+            return ConsumeSheepResult.Exhausted(locked)
         }
-        val consumed = current.copy(usedToday = current.usedToday + 1)
+        val consumed = current.copy(usedInWindow = current.usedInWindow + 1)
         _quota.value = consumed
         return ConsumeSheepResult.Allowed(consumed)
     }
