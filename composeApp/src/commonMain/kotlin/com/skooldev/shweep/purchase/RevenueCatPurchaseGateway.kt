@@ -21,9 +21,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 /**
  * RevenueCat-backed purchase gateway. One implementation serves Android and iOS because the
@@ -32,10 +29,8 @@ import kotlin.time.Instant
  * The app is anonymous (per device): no app user id is passed, so RevenueCat generates and stores
  * an anonymous id on the device. Purchase status is read from the `unlimited_sheep` entitlement.
  */
-@OptIn(ExperimentalTime::class)
 class RevenueCatPurchaseGateway(
-    private val apiKey: String,
-    private val clock: Clock = Clock.System
+    private val apiKey: String
 ) : StorePurchaseGateway {
 
     private var listener: StorePurchaseListener? = null
@@ -127,16 +122,6 @@ class RevenueCatPurchaseGateway(
                 listener?.onRestoreCompleted(false)
             }
         }
-    }
-
-    override fun setPaywallShownAt(epochMillis: Long) {
-        if (!Purchases.isConfigured) return
-        Purchases.sharedInstance.setAttributes(
-            mapOf(
-                RevenueCatConfig.PAYWALL_SHOWN_AT_ATTRIBUTE to
-                    Instant.fromEpochMilliseconds(epochMillis).toString()
-            )
-        )
     }
 
     override fun stop() {

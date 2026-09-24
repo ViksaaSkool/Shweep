@@ -19,5 +19,4 @@ object RevenueCatConfig {
 
     const val ENTITLEMENT_ID = "unlimited_sheep"
     const val PRODUCT_ID = UNLIMITED_SHEEP_PRODUCT_ID
-    const val PAYWALL_SHOWN_AT_ATTRIBUTE = "paywall_shown_at"
 }

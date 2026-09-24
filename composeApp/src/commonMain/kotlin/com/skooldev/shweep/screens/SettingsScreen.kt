@@ -42,9 +42,11 @@ fun SettingsScreen(
     onSaveColor: (SheepColor) -> Unit,
     onPrivacyPolicyClick: () -> Unit,
     onTermsOfServiceClick: () -> Unit,
+    onContactSupportClick: () -> Unit,
     onInviteFriendsClick: () -> Unit,
     onBuyUnlimited: () -> Unit,
     onRestorePurchases: () -> Unit,
+    versionLabel: String,
     limitedSheepEnabled: Boolean,
     purchaseState: UnlimitedSheepPurchaseState,
     onBack: () -> Unit
@@ -165,35 +167,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(Dimens.cardCornerRadiusLarge),
-                colors = CardDefaults.cardColors(
-                    containerColor = AppColors.CardBackgroundMediumAlpha
-                )
-            ) {
-                Column(modifier = Modifier.padding(Dimens.cardPaddingLarge)) {
-                    LinkRow(
-                        label = Strings.PRIVACY_POLICY,
-                        subtitle = Strings.LINK_OPENS_IN_BROWSER,
-                        onClick = onPrivacyPolicyClick
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = Dimens.spacingMedium),
-                        color = AppColors.TextPrimary.copy(alpha = 0.2f)
-                    )
-
-                    LinkRow(
-                        label = Strings.TERMS_OF_SERVICE,
-                        subtitle = Strings.LINK_OPENS_IN_BROWSER,
-                        onClick = onTermsOfServiceClick
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
-
             if (limitedSheepEnabled) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -216,10 +189,11 @@ fun SettingsScreen(
                             )
 
                             Text(
-                                text = if (purchaseState.isPurchased) {
-                                    Strings.UNLIMITED_SHEEP_STATE_YES
-                                } else {
-                                    Strings.UNLIMITED_SHEEP_STATE_NO
+                                text = when (purchaseState.entitlement) {
+                                    EntitlementState.PURCHASED -> Strings.UNLIMITED_SHEEP_STATE_PURCHASED
+                                    EntitlementState.NOT_PURCHASED -> Strings.UNLIMITED_SHEEP_STATE_NOT_PURCHASED
+                                    EntitlementState.CHECKING -> Strings.UNLIMITED_SHEEP_STATE_CHECKING
+                                    EntitlementState.UNAVAILABLE -> Strings.UNLIMITED_SHEEP_STATE_UNAVAILABLE
                                 },
                                 fontSize = Dimens.fontSizeLarge,
                                 fontWeight = FontWeight.Bold,
@@ -353,6 +327,79 @@ fun SettingsScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(Dimens.cardCornerRadiusLarge),
+                colors = CardDefaults.cardColors(
+                    containerColor = AppColors.CardBackgroundMediumAlpha
+                )
+            ) {
+                Column(modifier = Modifier.padding(Dimens.cardPaddingLarge)) {
+                    Text(
+                        text = Strings.ABOUT_TITLE,
+                        fontSize = Dimens.fontSizeMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.TextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(Dimens.spacingMedium))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = Strings.ABOUT_VERSION_LABEL,
+                            fontSize = Dimens.fontSizeLarge,
+                            color = AppColors.TextPrimary
+                        )
+
+                        Text(
+                            text = versionLabel,
+                            fontSize = Dimens.fontSizeLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = AppColors.TextMuted
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = Dimens.spacingMedium),
+                        color = AppColors.TextPrimary.copy(alpha = 0.2f)
+                    )
+
+                    LinkRow(
+                        label = Strings.PRIVACY_POLICY,
+                        subtitle = Strings.LINK_OPENS_IN_BROWSER,
+                        onClick = onPrivacyPolicyClick
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = Dimens.spacingMedium),
+                        color = AppColors.TextPrimary.copy(alpha = 0.2f)
+                    )
+
+                    LinkRow(
+                        label = Strings.TERMS_OF_SERVICE,
+                        subtitle = Strings.LINK_OPENS_IN_BROWSER,
+                        onClick = onTermsOfServiceClick
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = Dimens.spacingMedium),
+                        color = AppColors.TextPrimary.copy(alpha = 0.2f)
+                    )
+
+                    LinkRow(
+                        label = Strings.CONTACT_SUPPORT,
+                        subtitle = Strings.CONTACT_SUPPORT_SUBTITLE,
+                        onClick = onContactSupportClick
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(Dimens.spacingXXXLarge))
         }
     }
@@ -402,9 +449,11 @@ fun SettingsScreenPreview() {
         onSaveColor = {},
         onPrivacyPolicyClick = {},
         onTermsOfServiceClick = {},
+        onContactSupportClick = {},
         onInviteFriendsClick = {},
         onBuyUnlimited = {},
         onRestorePurchases = {},
+        versionLabel = "1.0.2 (12)",
         limitedSheepEnabled = false,
         purchaseState = UnlimitedSheepPurchaseState(),
         onBack = {}

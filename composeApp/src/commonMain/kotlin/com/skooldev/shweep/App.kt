@@ -22,6 +22,7 @@ import com.skooldev.shweep.screens.HistoryScreen
 import com.skooldev.shweep.screens.SettingsScreen
 import com.skooldev.shweep.screens.SheepColorDialog
 import com.skooldev.shweep.screens.StartScreen
+import com.skooldev.shweep.screens.UpdateNoticeDialog
 import com.skooldev.shweep.ui.theme.Strings
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,12 @@ enum class Screen {
     History,
     Settings
 }
+
+/**
+ * Sentinel for the update-notice preference while DataStore has not emitted yet, so the notice
+ * never flashes for a user who has already dismissed it.
+ */
+private const val UPDATE_NOTICE_NOT_LOADED = "\u0000not-loaded"
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Suppress("DEPRECATION")
@@ -58,6 +65,9 @@ fun App(
 
         val scope = rememberCoroutineScope()
         val uriHandler = LocalUriHandler.current
+
+        val platform = remember { getPlatform() }
+        val versionLabel = "${platform.appVersion} (${platform.appBuild})"
 
         val coordinator = remember(sessionRepository, scope) {
             CountingSessionCoordinator(sessionRepository, scope)
@@ -109,6 +119,12 @@ fun App(
         val hasChosenSheepColor by settingsRepository.hasChosenSheepColor.collectAsState(
             initial = true
         )
+        val seenUpdateNoticeVersion by settingsRepository.seenUpdateNoticeVersion.collectAsState(
+            initial = UPDATE_NOTICE_NOT_LOADED
+        )
+        val showUpdateNotice = limitedSheepEnabled &&
+            seenUpdateNoticeVersion != UPDATE_NOTICE_NOT_LOADED &&
+            seenUpdateNoticeVersion != FeatureFlags.UPDATE_NOTICE_VERSION
 
         when (currentScreen) {
             Screen.Start -> {
@@ -134,7 +150,6 @@ fun App(
                     purchaseState = purchaseState,
                     onPurchase = { purchaseManager.purchase() },
                     onRestore = { purchaseManager.restore() },
-                    onPaywallShown = { purchaseManager.markPaywallShown(it) },
                     sheepArtwork = selectedColor.toArtwork(),
                     coordinator = coordinator
                 )
@@ -158,11 +173,15 @@ fun App(
                     onTermsOfServiceClick = {
                         uriHandler.openUri(AppLinks.TERMS_OF_SERVICE)
                     },
+                    onContactSupportClick = {
+                        uriHandler.openUri(AppLinks.CONTACT_SUPPORT)
+                    },
                     onInviteFriendsClick = {
                         shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
                     onBuyUnlimited = { purchaseManager.purchase() },
                     onRestorePurchases = { purchaseManager.restore() },
+                    versionLabel = versionLabel,
                     limitedSheepEnabled = limitedSheepEnabled,
                     purchaseState = purchaseState,
                     onBack = { currentScreen = Screen.Start }
@@ -186,6 +205,18 @@ fun App(
                         settingsRepository.markSheepColorChosen()
                     }
                 }
+            )
+        }
+
+        if (showUpdateNotice) {
+            UpdateNoticeDialog(
+                onContinue = {
+                    scope.launch {
+                        settingsRepository.markUpdateNoticeSeen(FeatureFlags.UPDATE_NOTICE_VERSION)
+                    }
+                },
+                onPrivacyPolicy = { uriHandler.openUri(AppLinks.PRIVACY_POLICY) },
+                onTermsOfService = { uriHandler.openUri(AppLinks.TERMS_OF_SERVICE) }
             )
         }
     }

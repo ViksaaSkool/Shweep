@@ -3,7 +3,7 @@ package com.skooldev.shweep.data
 import com.skooldev.shweep.FeatureFlags
 
 internal val SHEEP_QUOTA_LIMIT: Int =
-    if (FeatureFlags.LOCAL_TEST_MODE) 3 else 50
+    if (FeatureFlags.LOCAL_TEST_MODE) 3 else 35
 internal val SHEEP_QUOTA_WINDOW_MILLIS: Long =
     if (FeatureFlags.LOCAL_TEST_MODE) 3L * 60L * 1000L else 24L * 60L * 60L * 1000L
 

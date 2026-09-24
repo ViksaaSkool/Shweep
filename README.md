@@ -38,10 +38,10 @@ The development history of the current version is documented in [DCLX26_PROMPTS.
 - 🌗 **Grayscale Wind-Down**: As your swiping slows down, the counting scene gradually loses color. A successful swipe brings the color back, and the Start screen always stays fully colored.
 - 📖 **Sleepstory (Redesigned History)**: A graphical summary with the average wind-down time, a duration arc, and a mini sheep flock, plus per-session cards showing when you started, how long you counted, and how many sheep you counted.
 - 🎨 **Sheep Color Choice**: Pick white or black sheep in Settings. Black sheep also switches the Start screen to the dark night background, and a first-launch, non-dismissable dialog makes the initial choice.
-- ⚙️ **Settings**: Sheep color, Privacy Policy, Terms of Service, and Invite friends. Changes apply only when you tap Save.
+- ⚙️ **Settings**: Sheep color, an About card (installed version, Privacy Policy, Terms of Service, contact support), and Invite friends. Changes apply only when you tap Save.
 - ⏱️ **Session Tracking**: A session starts on “Go to sleep”, is checkpointed locally, ends after roughly 10 seconds in the background, and is recovered if the app is closed mid-session.
 - 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend for your data.
-- 🐏 **Sheep Allowance & Unlimited Sheep**: Count up to 50 free sheep; the flock returns 24 hours later. An optional one-time in-app purchase ("Unlimited Sheep") unlocks unlimited counting forever. Purchase status is managed per device with RevenueCat.
+- 🐏 **Sheep Allowance & Unlimited Sheep**: From version 2.0.0, count up to 35 free sheep; the flock returns 24 hours later. An optional one-time in-app purchase ("Unlimited Sheep") removes the allowance while the purchase entitlement is valid. Purchase status is managed per device with RevenueCat, and a one-time notice explains the change when users update.
 - 📲 **Cross-Platform**: One Kotlin Multiplatform / Compose Multiplatform codebase for Android and iOS.
 - 🌐 **Legal Pages**: Privacy Policy and Terms of Service published on GitHub Pages at [shweep.lol](https://shweep.lol/).
 

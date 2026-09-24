@@ -49,19 +49,34 @@ object Strings {
     const val CHOOSE_SHEEP_TITLE = "Choose your sheep"
     const val CHOOSE_SHEEP_CONTINUE = "Continue"
 
+    // Settings - About
+    const val ABOUT_TITLE = "About Shweep"
+    const val ABOUT_VERSION_LABEL = "Version"
+    const val CONTACT_SUPPORT = "Contact support"
+    const val CONTACT_SUPPORT_SUBTITLE = "Opens your email app"
+
+    // Update notice (shown once on the first launch of the version that adds the allowance)
+    const val UPDATE_NOTICE_TITLE = "An update to your flock"
+    val UPDATE_NOTICE_MESSAGE: String
+        get() = "Shweep now includes $SHEEP_QUOTA_LIMIT free sheep. Once you use them, your allowance resets 24 hours later. Keep counting without the wait with the optional one-time Unlimited Sheep purchase.\n\nWe've updated our Privacy Policy and Terms to explain these changes and how RevenueCat manages purchases."
+    const val UPDATE_NOTICE_CONTINUE = "Continue"
+
     // Out of Sheep Dialog
     const val OUT_OF_SHEEP_TITLE = "No sheep left"
-    const val OUT_OF_SHEEP_MESSAGE = "You've spent all 50 free sheep. Your flock returns in 24 hours, or you can make it unlimited forever."
+    val OUT_OF_SHEEP_MESSAGE: String
+        get() = "You've spent all $SHEEP_QUOTA_LIMIT free sheep. Your flock returns in 24 hours, or you can make counting unlimited with a one-time purchase."
     const val OUT_OF_SHEEP_TIMER_LABEL = "until your flock returns"
     const val WAIT_UNTIL_RESET = "Wait for my flock"
 
     // Unlimited Sheep Purchase
     const val UNLIMITED_SHEEP_TITLE = "Unlimited sheep"
-    const val UNLIMITED_SHEEP_STATE_YES = "Yes"
-    const val UNLIMITED_SHEEP_STATE_NO = "No"
+    const val UNLIMITED_SHEEP_STATE_PURCHASED = "Purchased"
+    const val UNLIMITED_SHEEP_STATE_NOT_PURCHASED = "Not purchased"
+    const val UNLIMITED_SHEEP_STATE_CHECKING = "Checking..."
+    const val UNLIMITED_SHEEP_STATE_UNAVAILABLE = "Unavailable"
     const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Count as many sheep as you like, whenever you like. Restorable with the same store account."
-    const val UNLIMITED_SHEEP_ACTIVE = "Active forever on this device"
-    const val UNLIMITED_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your winding-down flock - unlimited, forever."
+    const val UNLIMITED_SHEEP_ACTIVE = "Active on this device"
+    const val UNLIMITED_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your winding-down flock - unlimited."
     const val UNLIMITED_SHEEP_PURCHASE_TITLE = "Buy Unlimited Sheep"
     const val UNLIMITED_SHEEP_PURCHASE_LOADING = "Loading purchase..."
     const val UNLIMITED_SHEEP_PURCHASING = "Purchasing..."

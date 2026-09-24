@@ -5,6 +5,5 @@ class DisabledStorePurchaseGateway : StorePurchaseGateway {
     override fun refreshEntitlement() {}
     override fun purchaseUnlimitedSheep() {}
     override fun restorePurchases() {}
-    override fun setPaywallShownAt(epochMillis: Long) {}
     override fun stop() {}
 }

@@ -15,6 +15,5 @@ interface StorePurchaseGateway {
     fun refreshEntitlement()
     fun purchaseUnlimitedSheep()
     fun restorePurchases()
-    fun setPaywallShownAt(epochMillis: Long)
     fun stop()
 }

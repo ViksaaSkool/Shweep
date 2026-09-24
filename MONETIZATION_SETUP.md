@@ -1,7 +1,7 @@
 # Monetization setup — Unlimited Sheep
 
 This document covers everything that must be configured **outside** the codebase to ship the
-50-sheep allowance and the one-time **Unlimited Sheep** purchase. The app-side implementation is
+35-sheep allowance and the one-time **Unlimited Sheep** purchase. The app-side implementation is
 already in place behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED`.
 
 ## Identifiers
@@ -11,10 +11,20 @@ already in place behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED`.
 | Product ID (both stores) | `unlimited_sheep` |
 | RevenueCat entitlement | `unlimited_sheep` |
 | RevenueCat offering | `default` (contains the `unlimited_sheep` package) |
-| RevenueCat subscriber attribute | `paywall_shown_at` |
 | Android package | `com.skooldev.shweep` |
 | iOS bundle id | `com.skooldev.shweep` |
 | Price | one-time non-consumable, base price $0.99 (auto-localized by each store) |
+
+## Release boundary
+
+| Version | Behavior |
+| --- | --- |
+| 1.0.0 / 1.0.2 | No allowance, no purchase. Settings → About shows the installed version. |
+| 2.0.0 | Introduces the 35-sheep allowance, the optional purchase, and the one-time "what's changed" notice. |
+
+Only advertise the allowance and the purchase in listings for 2.0.0 and later. The legal pages are
+version-aware and link to an archive for 1.0.0/1.0.2; publishing them does not change what an older
+installed version does.
 
 ## Keys: what goes where
 
@@ -53,7 +63,8 @@ committing them is safe. **Never** commit the secret key, the service-account JS
    base price $0.99 (let Play auto-localize), and activate it.
 2. Update the **Data safety** form: declare "Device or other IDs" collected by RevenueCat for
    App functionality and Analytics, encrypted in transit, not used for advertising, not sold.
-   Follow RevenueCat's data-safety guidance.
+   Follow RevenueCat's data-safety guidance. Treat these answers as provisional and verify them
+   against the shipped SDK configuration and the current store guidance before submitting.
 3. Update the store listing to mention the optional one-time purchase.
 
 ### 3. App Store Connect
@@ -64,7 +75,9 @@ committing them is safe. **Never** commit the secret key, the service-account JS
    reviewed with the next binary.
 3. Update **App Privacy**: declare "Identifiers → Device ID" (not linked to identity) and
    "Usage Data → Product Interaction" collected by RevenueCat. Follow RevenueCat's App Privacy
-   guidance.
+   guidance. Treat these answers as provisional and verify them against the shipped SDK
+   configuration before submitting. Do not assume that "no Shweep login" means "not linked to the
+   user" for Apple's classification.
 4. Update the listing to mention the optional one-time purchase.
 
 ### 4. Enable the feature
@@ -72,6 +85,15 @@ committing them is safe. **Never** commit the secret key, the service-account JS
 Set `LIMITED_DAILY_SHEEP_ENABLED = true` in
 `composeApp/src/commonMain/kotlin/com/skooldev/shweep/FeatureFlags.kt` only after steps 1–3 are
 done. The flag remains the kill switch.
+
+For the 2.0.0 release, also:
+
+- Build and publish the app as version `2.0.0` (Android `versionName`, iOS `MARKETING_VERSION`).
+- Confirm `FeatureFlags.UPDATE_NOTICE_VERSION` is `"2.0.0"` so returning users see the one-time
+  "what's changed" notice. Bump this constant only when a release adds user-visible changes that
+  returning users should be told about.
+- Publish the updated `docs/privacy` and `docs/terms` (with the archive pages) before or with the
+  2.0.0 binary.
 
 ## Testing
 
@@ -96,8 +118,8 @@ Run the app (`./gradlew :composeApp:installDebug`, or Xcode for iOS) and check:
 2. Dismiss it and swipe again: the dialog returns and the countdown does not restart.
 3. Kill and reopen the app: the dialog shows immediately on entering the counting screen.
 4. Wait out the 3 minutes: the dialog closes and counting resumes with 3 fresh sheep.
-5. Tap Buy: the dialog closes, sheep become unlimited, and Settings shows "Unlimited sheep: Yes"
-   with the thank-you line.
+5. Tap Buy: the dialog closes, sheep become unlimited, and Settings shows "Unlimited sheep:
+   Purchased" with the thank-you line.
 6. Reset between runs: `adb shell pm clear com.skooldev.shweep` (Android) or delete the app (iOS).
 
 Set `LOCAL_TEST_MODE = false` again before committing. If you switch modes with a lock already
@@ -113,9 +135,10 @@ Keep `LOCAL_TEST_MODE = false` and use the real store products.
   plus "Restore purchases" restores unlimited sheep.
 - **Offline**: counting and the allowance must keep working with no connection; only buying and the
   entitlement check need the network.
-- **24-hour window**: exhaust the allowance, confirm the paywall date is recorded (RevenueCat
-  customer attribute `paywall_shown_at` and the local `paywall_shown_at` DataStore key), confirm the
-  dialog reappears within 24 hours, and confirm the allowance resets after 24 hours.
+- **24-hour window**: exhaust the allowance, confirm the window start is recorded in the local
+  `paywall_shown_at` DataStore key, confirm the dialog reappears within 24 hours, and confirm the
+  allowance resets after 24 hours. This window is local only; the app does not send it to
+  RevenueCat.
 
 ## Policy notes
 
@@ -125,5 +148,13 @@ Keep `LOCAL_TEST_MODE = false` and use the real store products.
   non-consumables on iOS).
 - Keep the app positioned as general-audience wellness; do not enroll it as a children's app, which
   would add Families-policy purchase and data restrictions.
-- Keep the privacy policy (`docs/privacy`) and terms (`docs/terms`) accurate; they already describe
-  the purchase and RevenueCat.
+- Keep the privacy policy (`docs/privacy`) and terms (`docs/terms`) accurate. They are
+  version-aware: they describe the allowance and purchase for 2.0.0 and later, and link to the
+  archived 1.0.0/1.0.2 documents at `/privacy/1.0/` and `/terms/1.0/`.
+- Do not describe the purchase as removing the allowance "permanently"; the allowance is removed
+  only while the purchase entitlement remains valid (a refund or revocation ends it).
+- Do not claim the allowance is device- or account-linked, tamper-proof, or impossible to reset.
+  Describe it plainly: "your allowance resets 24 hours after you use it". The allowance is
+  calculated and stored locally, so clearing app data or reinstalling can start a fresh allowance;
+  never promise otherwise in copy.
+- The App shows the localized price before purchase and the installed version in Settings → About.

@@ -27,8 +27,6 @@ class MockStorePurchaseGateway(
         listener?.onRestoreCompleted(purchased)
     }
 
-    override fun setPaywallShownAt(epochMillis: Long) {}
-
     override fun stop() {
         listener = null
     }

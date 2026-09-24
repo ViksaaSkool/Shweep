@@ -86,10 +86,6 @@ class UnlimitedSheepPurchaseManager(
         gateway.refreshEntitlement()
     }
 
-    fun markPaywallShown(epochMillis: Long) {
-        gateway.setPaywallShownAt(epochMillis)
-    }
-
     fun stop() {
         gateway.stop()
     }

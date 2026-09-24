@@ -5,6 +5,8 @@ object AppLinks {
     const val WEB = "https://shweep.lol"
     const val PRIVACY_POLICY = "https://shweep.lol/privacy/"
     const val TERMS_OF_SERVICE = "https://shweep.lol/terms/"
+    const val SUPPORT_EMAIL = "contact@viktorarsovski.xyz"
+    const val CONTACT_SUPPORT = "mailto:$SUPPORT_EMAIL"
     const val GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.skooldev.shweep"
     const val APP_STORE = "https://apps.apple.com/app/id0000000000"
 

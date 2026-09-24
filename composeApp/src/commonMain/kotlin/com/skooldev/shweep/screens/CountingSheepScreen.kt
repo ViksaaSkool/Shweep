@@ -66,7 +66,6 @@ fun CountingSheepScreen(
     purchaseState: UnlimitedSheepPurchaseState,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
-    onPaywallShown: (Long) -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
     coordinator: CountingSessionCoordinator
 ) {
@@ -171,13 +170,11 @@ fun CountingSheepScreen(
 
                         if (result.quota.isExhausted) {
                             exhaustedQuota = result.quota
-                            onPaywallShown(result.quota.paywallShownAtEpochMillis)
                         }
                     }
                     is ConsumeSheepResult.Exhausted -> {
                         coordinator.recordAttempt(sample, elapsedMillis)
                         exhaustedQuota = result.quota
-                        onPaywallShown(result.quota.paywallShownAtEpochMillis)
                     }
                 }
             }
@@ -446,7 +443,6 @@ fun CountingSheepScreen(
             val quota = dailySheepQuotaRepository.refresh()
             if (quota.isExhausted) {
                 exhaustedQuota = quota
-                onPaywallShown(quota.paywallShownAtEpochMillis)
             }
         }
     }
@@ -552,7 +548,6 @@ fun CountingSheepScreenPreview() {
         purchaseState = UnlimitedSheepPurchaseState(),
         onPurchase = {},
         onRestore = {},
-        onPaywallShown = {},
         coordinator = CountingSessionCoordinator(
             sessionRepository = MockSessionRepository(),
             scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main)
