@@ -36,19 +36,26 @@ Swipe sheep, slow down, and make counting part of your bedtime wind-down.
     • A mini flock visual in your session summary
     
     🐑 MAKE BEDTIME YOURS
-    • Choose white or black sheep — black sheep brings a full night theme
-    • Change your mind anytime in Settings
+    • Choose white or black sheep for free — black sheep brings a full night theme
+    • Unlock Colorful Sheep for a rainbow flock
+    • Change your choice anytime in Settings
     • Invite friends to swap doom-scrolling for sheep
     
     🐏 FREE COUNTING & OPTIONAL UPGRADES
-    Count up to 35 sheep for free. Once you use your allowance, it resets 24 hours later. Want to keep counting without the wait? Unlock Unlimited Sheep with an optional one-time in-app purchase. Want a rainbow flock instead? Unlock Colorful Sheep too. Both are one-time purchases — no subscription — and the price is shown before you buy.
+    Count up to 35 sheep for free. Once you use your allowance, it resets 24 hours later.
+    
+    Want to keep counting without the wait? Unlock Unlimited Sheep with an optional one-time in-app purchase.
+    
+    Want a rainbow flock? Unlock Colorful Sheep with a separate optional one-time purchase.
+    
+    There are no subscriptions, and the localized price is shown before you buy.
     
     🔒 PRIVATE BY DESIGN
     • No account and no login
     • No ads
     • Session history stays in your device's app storage and may be included in platform backups
-    • RevenueCat manages purchase availability and verification; see our Privacy Policy
-    • Counting works offline. Purchase services — buying, restoring, and checking purchase status — use an internet connection
+    • RevenueCat processes purchase history and purchase-related identifiers to manage and restore purchases; see our Privacy Policy
+    • Counting works offline. Buying, restoring, and checking purchase status require an internet connection
     
     One gentle app. One small flock. One softer way to end the day.
     
@@ -61,6 +68,52 @@ Swipe sheep, slow down, and make counting part of your bedtime wind-down.
     Terms of Service: https://shweep.lol/terms
 ```
 
+### Play one-time products
+
+Paste these into **Monetize with Play → Products → In-app products** (one-time products).
+
+```
+Product ID: unlimited_sheep
+Title: Unlimited Sheep
+Description: Remove the 35-sheep allowance and count without waiting for its 24-hour reset.
+```
+
+```
+Product ID: colorful_sheep
+Title: Colorful Sheep
+Description: Unlock the rainbow sheep color. Unlimited counting is sold separately.
+```
+
+- Create both as one-time managed products, multi-quantity disabled, base price ~$0.99 (let Play auto-localize), active, and available everywhere the app ships.
+- Product IDs cannot be renamed or reused; confirm them before creating.
+
+### Play screenshot captions
+
+Optional short captions for the 2.0 screenshots. Do not put prices, discounts, "permanent", or subscription words on any asset.
+
+```
+Choose your flock
+Unlock rainbow sheep
+Optional one-time upgrades
+Count 35 sheep free
+```
+
+Recommended shots to add or replace: the color picker with white, black, and locked rainbow; rainbow sheep in the counting scene; Settings → Upgrades showing both independent upgrades; the allowance dialog or a tasteful 35-sheep graphic.
+
+### Play Console paste checklist
+
+Manual, outside the repository:
+
+- [ ] Store listing → Full description (Google Play section above)
+- [ ] Store listing → What's new (release notes below)
+- [ ] Store listing → screenshots and captions
+- [ ] Monetize → In-app products → create `unlimited_sheep` and `colorful_sheep`
+- [ ] App content → Data safety (purchase history collected, encrypted in transit, app functionality + analytics)
+- [ ] App content → Health apps declaration (Sleep Management; Stress Management, Relaxation, Mental Acuity)
+- [ ] App content → Ads: No
+- [ ] Store listing → Privacy Policy URL: https://shweep.lol/privacy/
+- [ ] Confirm the uploaded bundle contains `com.android.vending.BILLING`
+
 ## App Store
 
 ### Subtitle (23/30)
@@ -69,10 +122,10 @@ Swipe sheep, slow down, and make counting part of your bedtime wind-down.
 Swipe sheep. Wind down.
 ```
 
-### Promotional text (112/170, optional)
+### Promotional text (131/170, optional)
 
 ```
-Black sheep, a grayscale wind-down, and locally stored session history — your whole wind-down in one gentle app.
+White, black, or rainbow sheep, a grayscale wind-down, and locally stored session history — your whole wind-down in one gentle app.
 ```
 
 ### Keywords field (91/100)
@@ -105,18 +158,26 @@ Review your previous counting sessions and summary statistics.
 • A mini flock visual in your session summary
 
 MAKE BEDTIME YOURS
-• White or black sheep — black sheep switches the whole app to a night look
+• White or black sheep for free — black sheep switches the whole app to a night look
+• Unlock Colorful Sheep for a rainbow flock
 • Pick your sidekick on first launch, change it anytime in Settings
 • Invite friends to trade doom-scrolling for sheep
 
 FREE COUNTING & OPTIONAL UPGRADES
-Count up to 35 sheep for free. Once you use your allowance, it resets 24 hours later. Want to keep counting without the wait? Unlock Unlimited Sheep with an optional one-time in-app purchase. Want a rainbow flock instead? Unlock Colorful Sheep too. Both are one-time purchases — no subscription — and the price is shown before you buy.
+Count up to 35 sheep for free. Once you use your allowance, it resets 24 hours later.
+
+Want to keep counting without the wait? Unlock Unlimited Sheep with an optional one-time in-app purchase.
+
+Want a rainbow flock? Unlock Colorful Sheep with a separate optional one-time purchase.
+
+There are no subscriptions, and the localized price is shown before you buy.
 
 PRIVATE BY DESIGN
 • No account and no login
 • No ads
 • Session history stays in your device's app storage and may be included in platform backups
-• RevenueCat manages purchase availability and verification; see our Privacy Policy
+• RevenueCat processes purchase history and purchase-related identifiers to manage and restore purchases; see our Privacy Policy
+• Counting works offline. Buying, restoring, and checking purchase status require an internet connection
 
 One gentle app. One small flock. One softer way to end the day.
 
@@ -125,26 +186,60 @@ Privacy Policy: https://shweep.lol/privacy
 Terms of Service: https://shweep.lol/terms
 ```
 
+### In-app purchases
+
+Create both as **non-consumables** in App Store Connect (Monetization → In-App Purchases). Product IDs cannot be changed after saving.
+
+```
+Reference Name: Unlimited Sheep
+Product ID: unlimited_sheep
+Type: Non-Consumable
+Display Name (≤30): Unlimited Sheep
+Description (≤45): Remove the 35-sheep allowance.
+```
+
+```
+Reference Name: Colorful Sheep
+Product ID: colorful_sheep
+Type: Non-Consumable
+Display Name (≤30): Colorful Sheep
+Description (≤45): Unlock the rainbow sheep color.
+```
+
+- Price each at the ~$0.99 tier. Leave them "Ready to Submit" so they are reviewed with the next binary.
+- Add a review screenshot and a review note for each.
+
+### App Store paste checklist
+
+Manual, outside the repository:
+
+- [ ] Version metadata → Description
+- [ ] Version metadata → Promotional text
+- [ ] Version metadata → What's New (release notes below)
+- [ ] Monetization → In-App Purchases → create `unlimited_sheep` and `colorful_sheep` as non-consumables
+- [ ] App Privacy → declare Identifiers (device ID) and Usage Data (product interaction) for RevenueCat
+- [ ] Privacy Policy URL: https://shweep.lol/privacy/
+
 ## Release notes (2.0.0)
 
 ```
-This update introduces a free 35-sheep allowance, which resets 24 hours after it is used, and an optional one-time Unlimited Sheep purchase. We've also updated our Privacy Policy and Terms to explain purchase processing.
+Shweep 2.0 introduces a free 35-sheep allowance that resets after 24 hours, plus two optional one-time upgrades: Unlimited Sheep and Colorful Sheep. We've also updated Settings, our Privacy Policy, and our Terms to explain purchase processing.
 ```
 
 ## Version boundary
 
-- **1.0.0 / 1.0.2** — no sheep allowance and no in-app purchase. Settings → About shows the installed version.
-- **2.0.0** — introduces the 35-sheep allowance, the optional one-time "Unlimited Sheep" purchase, and a one-time "what's changed" notice on first launch.
-- Advertise the allowance and the purchase only in listings for 2.0.0 and later. Do not promise unrestricted counting in copy that also ships to 1.0.x.
+- **1.0.0 / 1.0.2** — no sheep allowance and no in-app purchase. Settings → About shows the installed version. These versions keep their existing behavior; the 2.0 changes apply only after a user updates.
+- **2.0.0** — introduces the 35-sheep allowance, two independent optional one-time purchases ("Unlimited Sheep" and "Colorful Sheep"), and a one-time "what's changed" notice on first launch.
+- Advertise the allowance and the purchases only in listings for 2.0.0 and later. Do not promise unrestricted counting in copy that also ships to 1.0.x.
 - Never hard-code a price in the descriptions; the store localizes the price, and the App shows the localized price before purchase.
 
 ## Notes on choices
 
 - Reused the app's established voice: "go to sleep like your ancestors", "Count sheep. Quiet your mind." (Play screenshot 05), and "Session history" (the app's History-screen term).
 - Accuracy fixes: "soothing stories" removed (Session history is counting-session history, not bedtime stories); "average time to sleep" replaced with "average wind-down time"; no claim that Shweep detects sleep or knows when the user drifts off. The app records elapsed counting time and ends a session when the app is backgrounded for about 10 seconds or the phone locks.
-- "No ads / no analytics / no tracking / on-device" claims are backed by docs/privacy — safe for the Play Data Safety and App Privacy forms.
+- "No ads" and "no account" claims remain accurate and are backed by docs/privacy. The earlier blanket "no analytics / no tracking / on-device" claim was removed from the store copy because RevenueCat processes purchase information; the copy now describes that processing accurately and still states that session history stays local.
 - Removed "insomnia" and "sleep aid" from store keywords to avoid implying treatment of a sleep disorder; keywords stay general-wellness (night routine, calm, relax, unwind).
-- In-app purchases: Shweep ships a 35-sheep allowance and an optional one-time "Unlimited Sheep" purchase (base price $0.99, localized by each store) starting with version 2.0.0. The feature is behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED` and must only be enabled once the RevenueCat project, the Play/App Store products, and the public SDK keys exist. The listings above already disclose the allowance and the purchase. The Play Data safety form and the App Privacy labels must be updated before enabling. See MONETIZATION_SETUP.md.
+- In-app purchases: Shweep ships a 35-sheep allowance and two independent optional one-time purchases, "Unlimited Sheep" and "Colorful Sheep" (base price $0.99 each, localized by each store), starting with version 2.0.0. Both are behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED` and must only be enabled once the RevenueCat project, the Play/App Store products, and the public SDK keys exist. The listings above already disclose the allowance and both purchases. The Play Data safety form and the App Privacy labels must be updated before enabling. See MONETIZATION_SETUP.md.
 - Store privacy copy no longer claims "no analytics, no tracking" as a blanket statement: RevenueCat processes a device-generated identifier and purchase information for purchase management, which must be disclosed.
 - Two independent one-time products now ship: **Unlimited Sheep** (`unlimited_sheep`) and **Colorful Sheep** (`colorful_sheep`). They are separate RevenueCat entitlements — buying one never unlocks the other — and both must be disclosed in the listing and store privacy forms.
 - App Store copy avoids emoji-heavy bullets (plain headers match the dreamy minimal tone) and avoids any Android references.
