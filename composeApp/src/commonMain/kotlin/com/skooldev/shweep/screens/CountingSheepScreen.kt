@@ -38,7 +38,8 @@ import com.skooldev.shweep.data.MockSessionRepository
 import com.skooldev.shweep.data.SessionRepository
 import com.skooldev.shweep.data.SheepAccessMode
 import com.skooldev.shweep.data.resolveSheepAccessMode
-import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseState
+import com.skooldev.shweep.purchase.PurchaseCatalog
+import com.skooldev.shweep.purchase.PurchaseState
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
@@ -63,14 +64,16 @@ fun CountingSheepScreen(
     sessionRepository: SessionRepository,
     dailySheepQuotaRepository: DailySheepQuotaRepository,
     limitedSheepEnabled: Boolean,
-    purchaseState: UnlimitedSheepPurchaseState,
+    purchaseState: PurchaseState,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
     coordinator: CountingSessionCoordinator
 ) {
-    val accessMode = remember(limitedSheepEnabled, purchaseState.entitlement) {
-        resolveSheepAccessMode(limitedSheepEnabled, purchaseState.entitlement)
+    val unlimitedSheepEntitlement =
+        purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
+    val accessMode = remember(limitedSheepEnabled, unlimitedSheepEntitlement) {
+        resolveSheepAccessMode(limitedSheepEnabled, unlimitedSheepEntitlement)
     }
     var sheepCount by remember { mutableStateOf(0) }
     var screenSize by remember { mutableStateOf(Size.Zero) }
@@ -545,7 +548,7 @@ fun CountingSheepScreenPreview() {
         sessionRepository = MockSessionRepository(),
         dailySheepQuotaRepository = MockDailySheepQuotaRepository(),
         limitedSheepEnabled = false,
-        purchaseState = UnlimitedSheepPurchaseState(),
+        purchaseState = PurchaseState(),
         onPurchase = {},
         onRestore = {},
         coordinator = CountingSessionCoordinator(

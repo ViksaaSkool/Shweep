@@ -10,13 +10,12 @@ package com.skooldev.shweep.purchase
  * The RevenueCat *secret* API key, the Google Play service-account JSON, and the App Store Connect
  * `.p8` key must never be committed here. They live only in the RevenueCat dashboard.
  *
+ * Entitlement and product identifiers live in [PurchaseCatalog], not here.
+ *
  * TODO(manual setup): replace the two placeholder keys with the real public SDK keys from
  * https://app.revenuecat.com/ once the RevenueCat project and store products exist.
  */
 object RevenueCatConfig {
     const val ANDROID_SDK_KEY = "goog_REPLACE_WITH_REVENUECAT_ANDROID_KEY"
     const val IOS_SDK_KEY = "appl_REPLACE_WITH_REVENUECAT_IOS_KEY"
-
-    const val ENTITLEMENT_ID = "unlimited_sheep"
-    const val PRODUCT_ID = UNLIMITED_SHEEP_PRODUCT_ID
 }

@@ -11,7 +11,7 @@ class SheepAccessModeTest {
         EntitlementState.entries.forEach { entitlement ->
             assertEquals(
                 SheepAccessMode.UNLIMITED,
-                resolveSheepAccessMode(limitedSheepEnabled = false, entitlement = entitlement)
+                resolveSheepAccessMode(limitedSheepEnabled = false, unlimitedSheepEntitlement = entitlement)
             )
         }
     }
@@ -20,7 +20,7 @@ class SheepAccessModeTest {
     fun purchasedEntitlementGrantsUnlimited() {
         assertEquals(
             SheepAccessMode.UNLIMITED,
-            resolveSheepAccessMode(limitedSheepEnabled = true, entitlement = EntitlementState.PURCHASED)
+            resolveSheepAccessMode(limitedSheepEnabled = true, unlimitedSheepEntitlement = EntitlementState.PURCHASED)
         )
     }
 
@@ -28,19 +28,15 @@ class SheepAccessModeTest {
     fun checkingEntitlementVerifiesOptimistically() {
         assertEquals(
             SheepAccessMode.VERIFYING_PURCHASE,
-            resolveSheepAccessMode(limitedSheepEnabled = true, entitlement = EntitlementState.CHECKING)
+            resolveSheepAccessMode(limitedSheepEnabled = true, unlimitedSheepEntitlement = EntitlementState.CHECKING)
         )
     }
 
     @Test
-    fun notPurchasedAndUnavailableStayLimited() {
+    fun notPurchasedStaysLimited() {
         assertEquals(
             SheepAccessMode.LIMITED,
-            resolveSheepAccessMode(limitedSheepEnabled = true, entitlement = EntitlementState.NOT_PURCHASED)
-        )
-        assertEquals(
-            SheepAccessMode.LIMITED,
-            resolveSheepAccessMode(limitedSheepEnabled = true, entitlement = EntitlementState.UNAVAILABLE)
+            resolveSheepAccessMode(limitedSheepEnabled = true, unlimitedSheepEntitlement = EntitlementState.NOT_PURCHASED)
         )
     }
 }

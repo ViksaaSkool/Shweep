@@ -25,6 +25,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.black_sheep
+import shweep.composeapp.generated.resources.colorful_sheep
 import shweep.composeapp.generated.resources.sheep
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.ui.theme.AppColors
@@ -34,7 +35,9 @@ import com.skooldev.shweep.ui.theme.Strings
 @Composable
 fun SheepColorDialog(
     selectedColor: SheepColor,
-    onConfirm: (SheepColor) -> Unit
+    hasColorfulSheep: Boolean,
+    onConfirm: (SheepColor) -> Unit,
+    onPurchaseColorful: () -> Unit
 ) {
     var selection by remember { mutableStateOf<SheepColor?>(null) }
 
@@ -82,6 +85,23 @@ fun SheepColorDialog(
                     onClick = { selection = SheepColor.BLACK }
                 )
 
+                Spacer(modifier = Modifier.height(Dimens.spacingSmall))
+
+                SheepColorOption(
+                    label = Strings.SHEEP_COLOR_COLORFUL,
+                    imageRes = Res.drawable.colorful_sheep,
+                    selected = selection == SheepColor.COLORFUL,
+                    locked = !hasColorfulSheep,
+                    lockLabel = Strings.SHEEP_COLOR_LOCKED,
+                    onClick = {
+                        if (hasColorfulSheep) {
+                            selection = SheepColor.COLORFUL
+                        } else {
+                            onPurchaseColorful()
+                        }
+                    }
+                )
+
                 Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
 
                 Button(
@@ -111,6 +131,8 @@ fun SheepColorDialog(
 fun SheepColorDialogPreview() {
     SheepColorDialog(
         selectedColor = SheepColor.WHITE,
-        onConfirm = {}
+        hasColorfulSheep = false,
+        onConfirm = {},
+        onPurchaseColorful = {}
     )
 }

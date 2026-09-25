@@ -27,7 +27,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * purchases-kmp SDK wraps Google Play Billing and StoreKit behind a common API.
  *
  * The app is anonymous (per device): no app user id is passed, so RevenueCat generates and stores
- * an anonymous id on the device. Purchase status is read from the `unlimited_sheep` entitlement.
+ * an anonymous id on the device. Every entitlement in [PurchaseCatalog] is read independently from
+ * [CustomerInfo], so a customer can own any combination of products.
  */
 class RevenueCatPurchaseGateway(
     private val apiKey: String
@@ -35,7 +36,7 @@ class RevenueCatPurchaseGateway(
 
     private var listener: StorePurchaseListener? = null
     private var scope: CoroutineScope? = null
-    private var product: StoreProduct? = null
+    private val products = mutableMapOf<String, StoreProduct>()
 
     private val delegate = object : PurchasesDelegate {
         override fun onPurchasePromoProduct(
@@ -49,7 +50,7 @@ class RevenueCatPurchaseGateway(
         }
 
         override fun onCustomerInfoUpdated(customerInfo: CustomerInfo) {
-            listener?.onEntitlementChanged(isPurchased(customerInfo))
+            listener?.onEntitlementsChanged(entitlementsOf(customerInfo))
         }
     }
 
@@ -61,28 +62,30 @@ class RevenueCatPurchaseGateway(
 
         ensureConfigured()
         Purchases.sharedInstance.delegate = delegate
-        activeScope.launch { loadProductAndEntitlement() }
+        activeScope.launch { loadProductsAndEntitlements() }
     }
 
-    override fun refreshEntitlement() {
+    override fun refreshEntitlements() {
         val activeScope = scope ?: return
         if (!Purchases.isConfigured) return
 
         activeScope.launch {
             try {
-                listener?.onEntitlementChanged(isPurchased(Purchases.sharedInstance.awaitCustomerInfo()))
+                listener?.onEntitlementsChanged(
+                    entitlementsOf(Purchases.sharedInstance.awaitCustomerInfo())
+                )
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: PurchasesException) {
-                // Keep the last known entitlement; a transient network failure must not revoke access.
+                // Keep the last known entitlements; a transient network failure must not revoke access.
             }
         }
     }
 
-    override fun purchaseUnlimitedSheep() {
-        val storeProduct = product
+    override fun purchase(productId: String) {
+        val storeProduct = products[productId]
         if (storeProduct == null) {
-            listener?.onPurchaseFailed(PURCHASE_FAILED_MESSAGE)
+            listener?.onPurchaseFailed(productId, PURCHASE_FAILED_MESSAGE)
             return
         }
         val activeScope = scope ?: return
@@ -90,22 +93,24 @@ class RevenueCatPurchaseGateway(
         activeScope.launch {
             try {
                 val purchase = Purchases.sharedInstance.awaitPurchase(storeProduct)
-                if (isPurchased(purchase.customerInfo)) {
-                    listener?.onEntitlementChanged(true)
+                val entitlements = entitlementsOf(purchase.customerInfo)
+                val target = PurchaseCatalog.entitlementFor(productId)
+                if (target != null && entitlements[target] == EntitlementState.PURCHASED) {
+                    listener?.onEntitlementsChanged(entitlements)
                 } else {
                     // Deferred payment (for example Google Play pending transactions).
-                    listener?.onPurchasePending()
+                    listener?.onPurchasePending(productId)
                 }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (transaction: PurchasesTransactionException) {
                 if (transaction.userCancelled) {
-                    listener?.onPurchaseCancelled()
+                    listener?.onPurchaseCancelled(productId)
                 } else {
-                    listener?.onPurchaseFailed(transaction.message)
+                    listener?.onPurchaseFailed(productId, transaction.message)
                 }
             } catch (_: PurchasesException) {
-                listener?.onPurchaseFailed(PURCHASE_FAILED_MESSAGE)
+                listener?.onPurchaseFailed(productId, PURCHASE_FAILED_MESSAGE)
             }
         }
     }
@@ -115,11 +120,11 @@ class RevenueCatPurchaseGateway(
 
         activeScope.launch {
             try {
-                listener?.onRestoreCompleted(isPurchased(Purchases.sharedInstance.awaitRestore()))
+                listener?.onRestoreCompleted(entitlementsOf(Purchases.sharedInstance.awaitRestore()))
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: PurchasesException) {
-                listener?.onRestoreCompleted(false)
+                listener?.onRestoreCompleted(emptyMap())
             }
         }
     }
@@ -130,7 +135,7 @@ class RevenueCatPurchaseGateway(
         }
         scope?.cancel()
         scope = null
-        product = null
+        products.clear()
         listener = null
     }
 
@@ -140,37 +145,44 @@ class RevenueCatPurchaseGateway(
         }
     }
 
-    private suspend fun loadProductAndEntitlement() {
+    private suspend fun loadProductsAndEntitlements() {
         try {
-            listener?.onEntitlementChanged(isPurchased(Purchases.sharedInstance.awaitCustomerInfo()))
+            listener?.onEntitlementsChanged(
+                entitlementsOf(Purchases.sharedInstance.awaitCustomerInfo())
+            )
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: PurchasesException) {
-            listener?.onEntitlementChanged(false)
+            listener?.onEntitlementsChanged(emptyMap())
         }
 
         try {
-            val storeProduct = findProductInOfferings(Purchases.sharedInstance.awaitOfferings())
-                ?: Purchases.sharedInstance.awaitGetProducts(listOf(RevenueCatConfig.PRODUCT_ID))
-                    .firstOrNull()
-
-            if (storeProduct != null) {
-                product = storeProduct
-                listener?.onProductLoaded(storeProduct.price.formatted)
+            val offerings = Purchases.sharedInstance.awaitOfferings()
+            val resolved = mutableMapOf<String, PurchasableProduct>()
+            PurchaseCatalog.productIds.forEach { productId ->
+                val storeProduct = findProductInOfferings(offerings, productId)
+                    ?: Purchases.sharedInstance.awaitGetProducts(listOf(productId)).firstOrNull()
+                if (storeProduct != null) {
+                    products[productId] = storeProduct
+                    resolved[productId] = PurchasableProduct(productId, storeProduct.price.formatted)
+                }
+            }
+            if (resolved.isEmpty()) {
+                listener?.onProductsUnavailable()
             } else {
-                listener?.onProductUnavailable()
+                listener?.onProductsLoaded(resolved)
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: PurchasesException) {
-            listener?.onProductUnavailable()
+            listener?.onProductsUnavailable()
         }
     }
 
-    private fun findProductInOfferings(offerings: Offerings): StoreProduct? {
+    private fun findProductInOfferings(offerings: Offerings, productId: String): StoreProduct? {
         offerings.all.values.forEach { offering ->
             offering.availablePackages.forEach { pkg ->
-                if (pkg.storeProduct.id == RevenueCatConfig.PRODUCT_ID) {
+                if (pkg.storeProduct.id == productId) {
                     return pkg.storeProduct
                 }
             }
@@ -178,8 +190,14 @@ class RevenueCatPurchaseGateway(
         return null
     }
 
-    private fun isPurchased(customerInfo: CustomerInfo): Boolean =
-        customerInfo.entitlements[RevenueCatConfig.ENTITLEMENT_ID]?.isActive == true
+    private fun entitlementsOf(customerInfo: CustomerInfo): Map<String, EntitlementState> =
+        PurchaseCatalog.entitlementIds.associateWith { entitlementId ->
+            if (customerInfo.entitlements[entitlementId]?.isActive == true) {
+                EntitlementState.PURCHASED
+            } else {
+                EntitlementState.NOT_PURCHASED
+            }
+        }
 
     private companion object {
         const val PURCHASE_FAILED_MESSAGE = "Purchase could not be completed"

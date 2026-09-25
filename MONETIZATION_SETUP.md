@@ -1,19 +1,29 @@
-# Monetization setup — Unlimited Sheep
+# Monetization setup — independent features
 
 This document covers everything that must be configured **outside** the codebase to ship the
-35-sheep allowance and the one-time **Unlimited Sheep** purchase. The app-side implementation is
-already in place behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED`.
+35-sheep allowance and the two independent one-time purchases, **Unlimited Sheep** and
+**Colorful Sheep**. Each is its own RevenueCat entitlement; ownership is checked independently.
+The app-side implementation is already in place behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED`.
 
 ## Identifiers
 
+All identifiers are centralized in
+`composeApp/src/commonMain/kotlin/com/skooldev/shweep/purchase/PurchaseCatalog.kt`. Store product
+ids, RevenueCat entitlement ids, and RevenueCat package ids are deliberately distinct.
+
 | Thing | Value |
 | --- | --- |
-| Product ID (both stores) | `unlimited_sheep` |
-| RevenueCat entitlement | `unlimited_sheep` |
-| RevenueCat offering | `default` (contains the `unlimited_sheep` package) |
+| Entitlement — Unlimited Sheep | `unlimited_sheep` |
+| Entitlement — Colorful Sheep | `colorful_sheep` |
+| Store product id — Unlimited Sheep (both stores) | `unlimited_sheep` |
+| Store product id — Colorful Sheep (both stores) | `colorful_sheep` |
+| RevenueCat offering | `default` (contains one package per product) |
 | Android package | `com.skooldev.shweep` |
 | iOS bundle id | `com.skooldev.shweep` |
-| Price | one-time non-consumable, base price $0.99 (auto-localized by each store) |
+| Price | one-time non-consumable each, base price $0.99 (auto-localized by each store) |
+
+The customer can own any combination of the two entitlements; purchasing one never unlocks the
+other.
 
 ## Release boundary
 
@@ -47,8 +57,9 @@ committing them is safe. **Never** commit the secret key, the service-account JS
 1. Create a project named **Shweep**.
 2. Add an **Android app** with package `com.skooldev.shweep`; copy its `goog_…` public SDK key.
 3. Add an **iOS app** with bundle id `com.skooldev.shweep`; copy its `appl_…` public SDK key.
-4. Create an entitlement with identifier `unlimited_sheep`.
-5. Create a `default` offering containing a package attached to the `unlimited_sheep` product.
+4. Create entitlements with identifiers `unlimited_sheep` and `colorful_sheep`.
+5. Create a `default` offering containing one package per product, and attach each product to its
+   entitlement (`unlimited_sheep` → `unlimited_sheep`, `colorful_sheep` → `colorful_sheep`).
 6. Connect the stores:
    - **Google Play**: create a Google Cloud service account, grant it "View app information and
      download bulk reports" in Play Console, download the JSON, and upload it in RevenueCat under
@@ -59,20 +70,20 @@ committing them is safe. **Never** commit the secret key, the service-account JS
 
 ### 2. Google Play Console
 
-1. Monetize → Products → In-app products → create `unlimited_sheep` as a **one-time** product,
-   base price $0.99 (let Play auto-localize), and activate it.
+1. Monetize → Products → In-app products → create `unlimited_sheep` **and** `colorful_sheep` as
+   **one-time** products, base price $0.99 each (let Play auto-localize), and activate them.
 2. Update the **Data safety** form: declare "Device or other IDs" collected by RevenueCat for
    App functionality and Analytics, encrypted in transit, not used for advertising, not sold.
    Follow RevenueCat's data-safety guidance. Treat these answers as provisional and verify them
    against the shipped SDK configuration and the current store guidance before submitting.
-3. Update the store listing to mention the optional one-time purchase.
+3. Update the store listing to mention the optional one-time purchases.
 
 ### 3. App Store Connect
 
 1. Confirm the app record uses bundle id `com.skooldev.shweep`.
-2. Features → In-App Purchases → create a **non-consumable** with product id `unlimited_sheep`,
-   ~$0.99 price tier, display name/description/review screenshot. Leave it "Ready to Submit"; it is
-   reviewed with the next binary.
+2. Features → In-App Purchases → create **non-consumables** with product ids `unlimited_sheep`
+   and `colorful_sheep`, ~$0.99 price tier each, display name/description/review screenshot. Leave
+   them "Ready to Submit"; they are reviewed with the next binary.
 3. Update **App Privacy**: declare "Identifiers → Device ID" (not linked to identity) and
    "Usage Data → Product Interaction" collected by RevenueCat. Follow RevenueCat's App Privacy
    guidance. Treat these answers as provisional and verify them against the shipped SDK
@@ -107,9 +118,10 @@ const val LOCAL_TEST_MODE = true
 
 That switches the app to:
 
-- 3 free sheep instead of 50, with a 3-minute reset window instead of 24 hours
-- an in-memory mock purchase gateway: "Buy Unlimited Sheep · $0.99" succeeds instantly with no
-  RevenueCat keys, and "Restore purchases" reflects the mock state
+- 3 free sheep instead of 35, with a 3-minute reset window instead of 24 hours
+- an in-memory mock purchase gateway: both "Buy Unlimited Sheep · $0.99" and "Unlock Colorful
+  Sheep · $0.99" succeed instantly with no RevenueCat keys, and "Restore purchases" reflects the
+  mock state
 - a "Local test mode" caption in the paywall dialog and the Settings card
 
 Run the app (`./gradlew :composeApp:installDebug`, or Xcode for iOS) and check:
@@ -118,9 +130,13 @@ Run the app (`./gradlew :composeApp:installDebug`, or Xcode for iOS) and check:
 2. Dismiss it and swipe again: the dialog returns and the countdown does not restart.
 3. Kill and reopen the app: the dialog shows immediately on entering the counting screen.
 4. Wait out the 3 minutes: the dialog closes and counting resumes with 3 fresh sheep.
-5. Tap Buy: the dialog closes, sheep become unlimited, and Settings shows "Unlimited sheep:
-   Purchased" with the thank-you line.
-6. Reset between runs: `adb shell pm clear com.skooldev.shweep` (Android) or delete the app (iOS).
+5. Tap Buy in the dialog: sheep become unlimited, and Settings → Upgrades shows Unlimited sheep
+   "Purchased".
+6. First-launch color dialog: the Colorful sheep option is locked; tapping it buys it and unlocks
+   the option. Settings → Sheep color shows the same lock/unlock.
+7. Buy only one product and confirm the other stays locked ("Not purchased" / "Locked") — the
+   entitlements are independent.
+8. Reset between runs: `adb shell pm clear com.skooldev.shweep` (Android) or delete the app (iOS).
 
 Set `LOCAL_TEST_MODE = false` again before committing. If you switch modes with a lock already
 recorded, clear the app data so the stored allowance does not look stale.
@@ -133,6 +149,8 @@ Keep `LOCAL_TEST_MODE = false` and use the real store products.
   card. Verify buy, restore, and that the allowance disappears after purchase.
 - **iOS**: use a Sandbox Apple ID in App Store Connect. Verify buy, restore, and that reinstalling
   plus "Restore purchases" restores unlimited sheep.
+- **Independence**: buy only Colorful Sheep and confirm Unlimited Sheep stays locked, then restore
+  and confirm both entitlements come back independently.
 - **Offline**: counting and the allowance must keep working with no connection; only buying and the
   entitlement check need the network.
 - **24-hour window**: exhaust the allowance, confirm the window start is recorded in the local
@@ -158,3 +176,8 @@ Keep `LOCAL_TEST_MODE = false` and use the real store products.
   calculated and stored locally, so clearing app data or reinstalling can start a fresh allowance;
   never promise otherwise in copy.
 - The App shows the localized price before purchase and the installed version in Settings → About.
+- Colorful Sheep is a cosmetic unlock gated by the `colorful_sheep` entitlement. It never affects
+  the free allowance; only `unlimited_sheep` does. Both must be disclosed in the store listing
+  (Apple Guideline 2.3.2) and covered by the App Privacy / Data safety forms.
+- Purchasing one product must never unlock the other. Feature access is entitlement-specific; there
+  is intentionally no shared "pro"/"premium" flag.

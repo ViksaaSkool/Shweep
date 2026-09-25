@@ -30,7 +30,9 @@ fun SheepColorOption(
     label: String,
     imageRes: DrawableResource,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    locked: Boolean = false,
+    lockLabel: String? = null
 ) {
     Surface(
         modifier = Modifier
@@ -63,7 +65,7 @@ fun SheepColorOption(
                 text = label,
                 fontSize = Dimens.fontSizeLarge,
                 fontWeight = FontWeight.Medium,
-                color = AppColors.TextPrimary,
+                color = if (locked) AppColors.TextMuted else AppColors.TextPrimary,
                 modifier = Modifier.weight(1f)
             )
 
@@ -75,6 +77,13 @@ fun SheepColorOption(
                         selectedColor = AppColors.TextPrimary,
                         unselectedColor = AppColors.TextPrimary.copy(alpha = 0.5f)
                     )
+                )
+            } else if (locked && lockLabel != null) {
+                Text(
+                    text = lockLabel,
+                    fontSize = Dimens.fontSizeSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = AppColors.TextMuted
                 )
             }
         }

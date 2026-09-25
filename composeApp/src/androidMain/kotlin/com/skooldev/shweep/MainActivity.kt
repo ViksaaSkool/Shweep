@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
             FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED &&
             ::purchaseGateway.isInitialized
         ) {
-            purchaseGateway.refreshEntitlement()
+            purchaseGateway.refreshEntitlements()
         }
     }
 }

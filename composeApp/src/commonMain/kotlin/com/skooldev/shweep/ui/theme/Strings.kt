@@ -37,6 +37,8 @@ object Strings {
     const val SHEEP_COLOR_TITLE = "Sheep color"
     const val SHEEP_COLOR_WHITE = "White sheep"
     const val SHEEP_COLOR_BLACK = "Black sheep"
+    const val SHEEP_COLOR_COLORFUL = "Colorful sheep"
+    const val SHEEP_COLOR_LOCKED = "Locked"
     const val PRIVACY_POLICY = "Privacy Policy"
     const val TERMS_OF_SERVICE = "Terms of Service"
     const val LINK_OPENS_IN_BROWSER = "Opens in your browser"
@@ -68,21 +70,33 @@ object Strings {
     const val OUT_OF_SHEEP_TIMER_LABEL = "until your flock returns"
     const val WAIT_UNTIL_RESET = "Wait for my flock"
 
-    // Unlimited Sheep Purchase
+    // Purchases (shared labels)
+    const val UPGRADES_TITLE = "Upgrades"
+    const val PURCHASE_STATE_PURCHASED = "Purchased"
+    const val PURCHASE_STATE_NOT_PURCHASED = "Not purchased"
+    const val PURCHASE_STATE_CHECKING = "Checking..."
+    const val PURCHASE_STATE_UNAVAILABLE = "Unavailable"
+    const val PURCHASE_LOADING = "Loading purchase..."
+    const val PURCHASE_PURCHASING = "Purchasing..."
+    const val PURCHASE_RESTORING = "Restoring..."
+    const val PURCHASE_UNAVAILABLE = "Purchase unavailable"
+    const val RESTORE_PURCHASES = "Restore purchases"
+
+    // Unlimited Sheep
     const val UNLIMITED_SHEEP_TITLE = "Unlimited sheep"
-    const val UNLIMITED_SHEEP_STATE_PURCHASED = "Purchased"
-    const val UNLIMITED_SHEEP_STATE_NOT_PURCHASED = "Not purchased"
-    const val UNLIMITED_SHEEP_STATE_CHECKING = "Checking..."
-    const val UNLIMITED_SHEEP_STATE_UNAVAILABLE = "Unavailable"
     const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Count as many sheep as you like, whenever you like. Restorable with the same store account."
     const val UNLIMITED_SHEEP_ACTIVE = "Active on this device"
     const val UNLIMITED_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your winding-down flock - unlimited."
     const val UNLIMITED_SHEEP_PURCHASE_TITLE = "Buy Unlimited Sheep"
-    const val UNLIMITED_SHEEP_PURCHASE_LOADING = "Loading purchase..."
-    const val UNLIMITED_SHEEP_PURCHASING = "Purchasing..."
-    const val UNLIMITED_SHEEP_RESTORING = "Restoring..."
-    const val UNLIMITED_SHEEP_UNAVAILABLE = "Purchase unavailable"
-    const val RESTORE_PURCHASES = "Restore purchases"
+
+    // Colorful Sheep
+    const val COLORFUL_SHEEP_TITLE = "Colorful sheep"
+    const val COLORFUL_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Unlock rainbow sheep for your meadow. Restorable with the same store account."
+    const val COLORFUL_SHEEP_ACTIVE = "Active on this device"
+    const val COLORFUL_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your rainbow flock."
+    const val COLORFUL_SHEEP_PURCHASE_TITLE = "Unlock Colorful Sheep"
+    const val COLORFUL_SHEEP_STATE_PURCHASED = "Unlocked"
+    const val COLORFUL_SHEEP_STATE_NOT_PURCHASED = "Locked"
 
     // Local test mode
     val LOCAL_TEST_MODE_MARKER: String

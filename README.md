@@ -41,7 +41,8 @@ The development history of the current version is documented in [DCLX26_PROMPTS.
 - ⚙️ **Settings**: Sheep color, an About card (installed version, Privacy Policy, Terms of Service, contact support), and Invite friends. Changes apply only when you tap Save.
 - ⏱️ **Session Tracking**: A session starts on “Go to sleep”, is checkpointed locally, ends after roughly 10 seconds in the background, and is recovered if the app is closed mid-session.
 - 💾 **Local Persistence**: Sessions, the active-session checkpoint, and preferences are stored with multiplatform DataStore. No account and no backend for your data.
-- 🐏 **Sheep Allowance & Unlimited Sheep**: From version 2.0.0, count up to 35 free sheep; the flock returns 24 hours later. An optional one-time in-app purchase ("Unlimited Sheep") removes the allowance while the purchase entitlement is valid. Purchase status is managed per device with RevenueCat, and a one-time notice explains the change when users update.
+- 🐏 **Sheep Allowance & Unlimited Sheep**: From version 2.0.0, count up to 35 free sheep; the flock returns 24 hours later. An optional one-time in-app purchase ("Unlimited Sheep") removes the allowance while the purchase entitlement is valid. Purchase status is managed per device with RevenueCat as the source of truth, and a one-time notice explains the change when users update.
+- 🌈 **Colorful Sheep**: An optional one-time in-app purchase unlocks rainbow sheep alongside the free white and black colors. It is an independent RevenueCat entitlement, so owning it never affects the sheep allowance, and owning Unlimited Sheep never unlocks it.
 - 📲 **Cross-Platform**: One Kotlin Multiplatform / Compose Multiplatform codebase for Android and iOS.
 - 🌐 **Legal Pages**: Privacy Policy and Terms of Service published on GitHub Pages at [shweep.lol](https://shweep.lol/).
 

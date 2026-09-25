@@ -12,11 +12,13 @@ import com.skooldev.shweep.data.SessionRepositoryImpl
 import com.skooldev.shweep.data.SettingsRepositoryImpl
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.data.createDataStore
+import com.skooldev.shweep.data.effectiveSheepColor
 import com.skooldev.shweep.data.toArtwork
 import com.skooldev.shweep.purchase.DisabledStorePurchaseGateway
 import com.skooldev.shweep.purchase.MockStorePurchaseGateway
+import com.skooldev.shweep.purchase.PurchaseCatalog
+import com.skooldev.shweep.purchase.PurchaseManager
 import com.skooldev.shweep.purchase.StorePurchaseGateway
-import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseManager
 import com.skooldev.shweep.screens.CountingSheepScreen
 import com.skooldev.shweep.screens.HistoryScreen
 import com.skooldev.shweep.screens.SettingsScreen
@@ -59,7 +61,7 @@ fun App(
             if (limitedSheepEnabled) purchaseGateway else DisabledStorePurchaseGateway()
         }
         val purchaseManager = remember(effectiveGateway) {
-            UnlimitedSheepPurchaseManager(effectiveGateway)
+            PurchaseManager(effectiveGateway)
         }
         val purchaseState by purchaseManager.state.collectAsState()
 
@@ -116,6 +118,7 @@ fun App(
         val selectedColor by settingsRepository.sheepColor.collectAsState(
             initial = SheepColor.WHITE
         )
+        val renderedColor = effectiveSheepColor(selectedColor, purchaseState.hasColorfulSheep)
         val hasChosenSheepColor by settingsRepository.hasChosenSheepColor.collectAsState(
             initial = true
         )
@@ -135,7 +138,7 @@ fun App(
                     },
                     onHistoryClick = { currentScreen = Screen.History },
                     onSettingsClick = { currentScreen = Screen.Settings },
-                    sheepColor = selectedColor
+                    sheepColor = renderedColor
                 )
             }
             Screen.Counting -> {
@@ -148,9 +151,9 @@ fun App(
                     dailySheepQuotaRepository = dailySheepQuotaRepository,
                     limitedSheepEnabled = limitedSheepEnabled,
                     purchaseState = purchaseState,
-                    onPurchase = { purchaseManager.purchase() },
+                    onPurchase = { purchaseManager.purchase(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) },
                     onRestore = { purchaseManager.restore() },
-                    sheepArtwork = selectedColor.toArtwork(),
+                    sheepArtwork = renderedColor.toArtwork(),
                     coordinator = coordinator
                 )
             }
@@ -163,6 +166,7 @@ fun App(
             Screen.Settings -> {
                 SettingsScreen(
                     selectedColor = selectedColor,
+                    hasColorfulSheep = purchaseState.hasColorfulSheep,
                     onSaveColor = { color ->
                         scope.launch { settingsRepository.setSheepColor(color) }
                         currentScreen = Screen.Start
@@ -179,7 +183,7 @@ fun App(
                     onInviteFriendsClick = {
                         shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
-                    onBuyUnlimited = { purchaseManager.purchase() },
+                    onPurchase = { productId -> purchaseManager.purchase(productId) },
                     onRestorePurchases = { purchaseManager.restore() },
                     versionLabel = versionLabel,
                     limitedSheepEnabled = limitedSheepEnabled,
@@ -199,11 +203,15 @@ fun App(
         if (!hasChosenSheepColor) {
             SheepColorDialog(
                 selectedColor = selectedColor,
+                hasColorfulSheep = purchaseState.hasColorfulSheep,
                 onConfirm = { color ->
                     scope.launch {
                         settingsRepository.setSheepColor(color)
                         settingsRepository.markSheepColorChosen()
                     }
+                },
+                onPurchaseColorful = {
+                    purchaseManager.purchase(PurchaseCatalog.COLORFUL_SHEEP_PRODUCT)
                 }
             )
         }

@@ -45,5 +45,44 @@ class SheepColorTest {
     fun storageValuesAreLowerCase() {
         assertEquals("white", SheepColor.WHITE.storageValue)
         assertEquals("black", SheepColor.BLACK.storageValue)
+        assertEquals("colorful", SheepColor.COLORFUL.storageValue)
+    }
+
+    @Test
+    fun colorfulColorMapsToColorfulArtwork() {
+        assertEquals(SheepArtwork.COLORFUL, SheepColor.COLORFUL.toArtwork())
+    }
+
+    @Test
+    fun fromStorageReturnsColorfulForColorful() {
+        assertEquals(SheepColor.COLORFUL, SheepColor.fromStorage("colorful"))
+    }
+
+    @Test
+    fun effectiveColorFallsBackToWhiteWithoutEntitlement() {
+        assertEquals(
+            SheepColor.WHITE,
+            effectiveSheepColor(SheepColor.COLORFUL, hasColorfulSheep = false)
+        )
+    }
+
+    @Test
+    fun effectiveColorKeepsColorfulWithEntitlement() {
+        assertEquals(
+            SheepColor.COLORFUL,
+            effectiveSheepColor(SheepColor.COLORFUL, hasColorfulSheep = true)
+        )
+    }
+
+    @Test
+    fun effectiveColorLeavesFreeColorsUnchanged() {
+        assertEquals(
+            SheepColor.BLACK,
+            effectiveSheepColor(SheepColor.BLACK, hasColorfulSheep = false)
+        )
+        assertEquals(
+            SheepColor.WHITE,
+            effectiveSheepColor(SheepColor.WHITE, hasColorfulSheep = false)
+        )
     }
 }

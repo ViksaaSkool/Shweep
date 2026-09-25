@@ -16,8 +16,9 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import com.skooldev.shweep.FeatureFlags
 import com.skooldev.shweep.purchase.EntitlementState
+import com.skooldev.shweep.purchase.PurchaseCatalog
 import com.skooldev.shweep.purchase.PurchaseOperation
-import com.skooldev.shweep.purchase.UnlimitedSheepPurchaseState
+import com.skooldev.shweep.purchase.PurchaseState
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.Strings
@@ -26,7 +27,7 @@ import com.skooldev.shweep.ui.theme.Strings
 @Composable
 fun OutOfSheepDialog(
     nextResetEpochMillis: Long,
-    purchaseState: UnlimitedSheepPurchaseState,
+    purchaseState: PurchaseState,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
     onDismiss: () -> Unit,
@@ -147,17 +148,24 @@ fun OutOfSheepDialog(
                 Spacer(modifier = Modifier.height(Dimens.spacingXXLarge))
 
                 val buyButtonText = when {
-                    purchaseState.operation == PurchaseOperation.PURCHASING -> Strings.UNLIMITED_SHEEP_PURCHASING
-                    purchaseState.operation == PurchaseOperation.RESTORING -> Strings.UNLIMITED_SHEEP_RESTORING
-                    purchaseState.entitlement == EntitlementState.CHECKING -> Strings.UNLIMITED_SHEEP_PURCHASE_LOADING
-                    purchaseState.entitlement == EntitlementState.UNAVAILABLE -> Strings.UNLIMITED_SHEEP_UNAVAILABLE
-                    purchaseState.isProductLoaded -> "${Strings.UNLIMITED_SHEEP_PURCHASE_TITLE} · ${purchaseState.product!!.localizedPrice}"
-                    else -> Strings.UNLIMITED_SHEEP_PURCHASE_LOADING
+                    purchaseState.operation == PurchaseOperation.PURCHASING &&
+                        purchaseState.pendingProductId == PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT ->
+                        Strings.PURCHASE_PURCHASING
+                    purchaseState.operation == PurchaseOperation.RESTORING -> Strings.PURCHASE_RESTORING
+                    purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) == EntitlementState.CHECKING ->
+                        Strings.PURCHASE_LOADING
+                    purchaseState.product(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) != null ->
+                        "${Strings.UNLIMITED_SHEEP_PURCHASE_TITLE} · ${purchaseState.product(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT)!!.localizedPrice}"
+                    purchaseState.productsUnavailable -> Strings.PURCHASE_UNAVAILABLE
+                    else -> Strings.PURCHASE_LOADING
                 }
 
                 Button(
                     onClick = onPurchase,
-                    enabled = purchaseState.canBuy && purchaseState.operation == PurchaseOperation.IDLE,
+                    enabled = purchaseState.canBuy(
+                        PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT,
+                        PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Dimens.buttonHeight),
@@ -181,7 +189,7 @@ fun OutOfSheepDialog(
                 OutlinedButton(
                     onClick = onRestore,
                     enabled = purchaseState.operation == PurchaseOperation.IDLE &&
-                        purchaseState.entitlement != EntitlementState.CHECKING,
+                        purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) != EntitlementState.CHECKING,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Dimens.buttonHeight),
@@ -192,7 +200,7 @@ fun OutOfSheepDialog(
                 ) {
                     Text(
                         text = if (purchaseState.operation == PurchaseOperation.RESTORING) {
-                            Strings.UNLIMITED_SHEEP_RESTORING
+                            Strings.PURCHASE_RESTORING
                         } else {
                             Strings.RESTORE_PURCHASES
                         },
@@ -246,7 +254,7 @@ fun OutOfSheepDialog(
 fun OutOfSheepDialogPreview() {
     OutOfSheepDialog(
         nextResetEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
-        purchaseState = UnlimitedSheepPurchaseState(),
+        purchaseState = PurchaseState(),
         onPurchase = {},
         onRestore = {},
         onDismiss = {},
