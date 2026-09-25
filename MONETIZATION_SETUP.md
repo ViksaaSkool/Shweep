@@ -3,13 +3,19 @@
 This document covers everything that must be configured **outside** the codebase to ship the
 35-sheep allowance and the two independent one-time purchases, **Unlimited Sheep** and
 **Colorful Sheep**. Each is its own RevenueCat entitlement; ownership is checked independently.
-The app-side implementation is already in place behind `FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED`.
+
+The free allowance is entirely local: a used-sheep count and a cooldown timestamp stored on the
+device. There is no Shweep backend, no Cloudflare Worker, no Turso database, no custom API, no
+accounts, and no device identifier sent to any server. RevenueCat is the only runtime service, and
+it is used only for products, purchases, restores, and entitlements.
 
 ## Identifiers
 
 All identifiers are centralized in
 `composeApp/src/commonMain/kotlin/com/skooldev/shweep/purchase/PurchaseCatalog.kt`. Store product
-ids, RevenueCat entitlement ids, and RevenueCat package ids are deliberately distinct.
+ids, RevenueCat entitlement ids, and RevenueCat package ids are conceptually separate namespaces;
+the current product and entitlement ids intentionally use the same string values, and package ids
+are configured separately in the RevenueCat dashboard.
 
 | Thing | Value |
 | --- | --- |
@@ -30,9 +36,9 @@ other.
 | Version | Behavior |
 | --- | --- |
 | 1.0.0 / 1.0.2 | No allowance, no purchase. Settings → About shows the installed version. |
-| 2.0.0 | Introduces the 35-sheep allowance, the optional purchase, and the one-time "what's changed" notice. |
+| 2.0.0 | Introduces the 35-sheep allowance, the two optional purchases, and the one-time "what's changed" notice. |
 
-Only advertise the allowance and the purchase in listings for 2.0.0 and later. The legal pages are
+Only advertise the allowance and the purchases in listings for 2.0.0 and later. The legal pages are
 version-aware and link to an archive for 1.0.0/1.0.2; publishing them does not change what an older
 installed version does.
 
@@ -89,13 +95,12 @@ committing them is safe. **Never** commit the secret key, the service-account JS
    guidance. Treat these answers as provisional and verify them against the shipped SDK
    configuration before submitting. Do not assume that "no Shweep login" means "not linked to the
    user" for Apple's classification.
-4. Update the listing to mention the optional one-time purchase.
+4. Update the listing to mention the optional one-time purchases.
 
 ### 4. Enable the feature
 
-Set `LIMITED_DAILY_SHEEP_ENABLED = true` in
-`composeApp/src/commonMain/kotlin/com/skooldev/shweep/FeatureFlags.kt` only after steps 1–3 are
-done. The flag remains the kill switch.
+There is no feature flag or kill switch. The 35-sheep allowance and both purchases are part of the
+shipped app; configure steps 1–3 before building the release binary.
 
 For the 2.0.0 release, also:
 
@@ -105,45 +110,24 @@ For the 2.0.0 release, also:
   returning users should be told about.
 - Publish the updated `docs/privacy` and `docs/terms` (with the archive pages) before or with the
   2.0.0 binary.
+- Verify the release behavior: 35 free sheep, then a 24-hour cooldown, then 35 again.
 
 ## Testing
 
-### Local test mode (no accounts, about a minute)
+### Local behavior (no store accounts)
 
-Flip one flag in `composeApp/src/commonMain/kotlin/com/skooldev/shweep/FeatureFlags.kt`:
+The free allowance is local and needs no accounts. Run the app (`./gradlew :composeApp:installDebug`,
+or Xcode for iOS) and check:
 
-```kotlin
-const val LOCAL_TEST_MODE = true
-```
-
-That switches the app to:
-
-- 3 free sheep instead of 35, with a 3-minute reset window instead of 24 hours
-- an in-memory mock purchase gateway: both "Buy Unlimited Sheep · $0.99" and "Unlock Colorful
-  Sheep · $0.99" succeed instantly with no RevenueCat keys, and "Restore purchases" reflects the
-  mock state
-- a "Local test mode" caption in the paywall dialog and the Settings card
-
-Run the app (`./gradlew :composeApp:installDebug`, or Xcode for iOS) and check:
-
-1. Swipe three sheep: the paywall dialog appears with a 3-minute countdown.
+1. Swipe 35 sheep; the 35th opens the cooldown dialog with a 24-hour countdown.
 2. Dismiss it and swipe again: the dialog returns and the countdown does not restart.
-3. Kill and reopen the app: the dialog shows immediately on entering the counting screen.
-4. Wait out the 3 minutes: the dialog closes and counting resumes with 3 fresh sheep.
-5. Tap Buy in the dialog: sheep become unlimited, and Settings → Upgrades shows Unlimited sheep
-   "Purchased".
-6. First-launch color dialog: the Colorful sheep option is locked; tapping it buys it and unlocks
-   the option. Settings → Sheep color shows the same lock/unlock.
-7. Buy only one product and confirm the other stays locked ("Not purchased" / "Locked") — the
-   entitlements are independent.
-8. Reset between runs: `adb shell pm clear com.skooldev.shweep` (Android) or delete the app (iOS).
-
-Set `LOCAL_TEST_MODE = false` again before committing. If you switch modes with a lock already
-recorded, clear the app data so the stored allowance does not look stale.
+3. Kill and reopen the app: the countdown resumes from the stored timestamp.
+4. Purchases need a store account; use the sandbox below. Previews and unit tests use the in-memory
+   gateways and repositories and do not touch RevenueCat.
 
 ### Store sandbox (real purchase flow)
 
-Keep `LOCAL_TEST_MODE = false` and use the real store products.
+Use the real store products.
 
 - **Android**: publish a build to an internal track, add a license tester, and purchase with a test
   card. Verify buy, restore, and that the allowance disappears after purchase.
@@ -151,12 +135,11 @@ Keep `LOCAL_TEST_MODE = false` and use the real store products.
   plus "Restore purchases" restores unlimited sheep.
 - **Independence**: buy only Colorful Sheep and confirm Unlimited Sheep stays locked, then restore
   and confirm both entitlements come back independently.
-- **Offline**: counting and the allowance must keep working with no connection; only buying and the
-  entitlement check need the network.
-- **24-hour window**: exhaust the allowance, confirm the window start is recorded in the local
+- **Offline**: counting and the local allowance must keep working with no connection; only buying
+  and restoring need the network, while previously cached purchase status may remain available.
+- **24-hour cooldown**: exhaust the allowance, confirm the cooldown start is recorded in the local
   `paywall_shown_at` DataStore key, confirm the dialog reappears within 24 hours, and confirm the
-  allowance resets after 24 hours. This window is local only; the app does not send it to
-  RevenueCat.
+  allowance resets after 24 hours. This cooldown is local only; the app never sends it anywhere.
 
 ## Policy notes
 
@@ -167,14 +150,14 @@ Keep `LOCAL_TEST_MODE = false` and use the real store products.
 - Keep the app positioned as general-audience wellness; do not enroll it as a children's app, which
   would add Families-policy purchase and data restrictions.
 - Keep the privacy policy (`docs/privacy`) and terms (`docs/terms`) accurate. They are
-  version-aware: they describe the allowance and purchase for 2.0.0 and later, and link to the
+  version-aware: they describe the allowance and both purchases for 2.0.0 and later, and link to the
   archived 1.0.0/1.0.2 documents at `/privacy/1.0/` and `/terms/1.0/`.
-- Do not describe the purchase as removing the allowance "permanently"; the allowance is removed
+- Do not describe the purchases as removing the allowance "permanently"; the allowance is removed
   only while the purchase entitlement remains valid (a refund or revocation ends it).
-- Do not claim the allowance is device- or account-linked, tamper-proof, or impossible to reset.
-  Describe it plainly: "your allowance resets 24 hours after you use it". The allowance is
-  calculated and stored locally, so clearing app data or reinstalling can start a fresh allowance;
-  never promise otherwise in copy.
+- Do not claim the allowance is device- or account-linked, tamper-proof, or impossible to reset, and
+  do not promise that allowance state persists across installations or devices. Describe it plainly:
+  "the 24-hour countdown starts when you count the 35th free sheep". The allowance is calculated and
+  stored locally; never promise persistence in copy.
 - The App shows the localized price before purchase and the installed version in Settings → About.
 - Colorful Sheep is a cosmetic unlock gated by the `colorful_sheep` entitlement. It never affects
   the free allowance; only `unlimited_sheep` does. Both must be disclosed in the store listing

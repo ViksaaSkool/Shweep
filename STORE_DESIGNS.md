@@ -99,6 +99,8 @@ The finished canvas: **five App Store assets, five Google Play assets, and the u
 
 ## Notes
 
+> The 1.x screenshot set above does not show the 35-sheep allowance, the cooldown dialog, Colorful Sheep, or the independent Upgrades card. It must not be treated as a complete 2.0 store-asset set. See `STORE_NOTES.md` for the recommended 2.0 screenshots.
+
 - The captures in `art/prompts/` document the creation process; they are repository source artwork and are not part of the app or website builds.
 - The store listing assets themselves are uploaded to Google Play Console and App Store Connect, not committed to this repository.
 - The Session history assets were revised for accuracy: Session history is counting-session history, not bedtime stories, and the graphics no longer claim the app measures time to sleep. Any "soothing stories" or "time to sleep" wording still visible in the `art/prompts/` captures is the pre-revision copy.

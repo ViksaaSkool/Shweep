@@ -29,6 +29,7 @@ data class PurchaseState(
     val entitlements: Map<String, EntitlementState> = emptyMap(),
     val products: Map<String, PurchasableProduct> = emptyMap(),
     val productsUnavailable: Boolean = false,
+    val productsLoadCompleted: Boolean = false,
     val operation: PurchaseOperation = PurchaseOperation.IDLE,
     val pendingProductId: String? = null,
     val errorMessage: String? = null
@@ -45,6 +46,14 @@ data class PurchaseState(
     fun product(productId: String): PurchasableProduct? = products[productId]
 
     fun isProductLoaded(productId: String): Boolean = products.containsKey(productId)
+
+    /**
+     * True once product loading has finished (successfully or not) and this specific product is
+     * still missing. Lets the UI show "unavailable" instead of "loading" forever when only one of
+     * several products failed to resolve.
+     */
+    fun isProductUnavailable(productId: String): Boolean =
+        !isProductLoaded(productId) && (productsUnavailable || productsLoadCompleted)
 
     fun isPurchased(entitlementId: String): Boolean =
         entitlementState(entitlementId) == EntitlementState.PURCHASED

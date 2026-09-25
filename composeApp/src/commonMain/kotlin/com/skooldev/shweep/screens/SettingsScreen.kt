@@ -28,7 +28,6 @@ import shweep.composeapp.generated.resources.background_start
 import shweep.composeapp.generated.resources.black_sheep
 import shweep.composeapp.generated.resources.colorful_sheep
 import shweep.composeapp.generated.resources.sheep
-import com.skooldev.shweep.FeatureFlags
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.purchase.EntitlementState
 import com.skooldev.shweep.purchase.PurchaseCatalog
@@ -50,7 +49,6 @@ fun SettingsScreen(
     onPurchase: (String) -> Unit,
     onRestorePurchases: () -> Unit,
     versionLabel: String,
-    limitedSheepEnabled: Boolean,
     purchaseState: PurchaseState,
     onBack: () -> Unit
 ) {
@@ -187,109 +185,96 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
 
-            if (limitedSheepEnabled) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(Dimens.cardCornerRadiusLarge),
-                    colors = CardDefaults.cardColors(
-                        containerColor = AppColors.CardBackgroundMediumAlpha
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(Dimens.cardCornerRadiusLarge),
+                colors = CardDefaults.cardColors(
+                    containerColor = AppColors.CardBackgroundMediumAlpha
+                )
+            ) {
+                Column(modifier = Modifier.padding(Dimens.cardPaddingLarge)) {
+                    Text(
+                        text = Strings.UPGRADES_TITLE,
+                        fontSize = Dimens.fontSizeMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.TextSecondary
                     )
-                ) {
-                    Column(modifier = Modifier.padding(Dimens.cardPaddingLarge)) {
-                        Text(
-                            text = Strings.UPGRADES_TITLE,
-                            fontSize = Dimens.fontSizeMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = AppColors.TextSecondary
-                        )
 
+                    Spacer(modifier = Modifier.height(Dimens.spacingMedium))
+
+                    UpgradeRow(
+                        entitlementId = PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT,
+                        productId = PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT,
+                        title = Strings.UNLIMITED_SHEEP_TITLE,
+                        description = Strings.UNLIMITED_SHEEP_DESCRIPTION_DETAIL,
+                        activeLabel = Strings.UNLIMITED_SHEEP_ACTIVE,
+                        thankYou = Strings.UNLIMITED_SHEEP_THANK_YOU,
+                        buyTitle = Strings.UNLIMITED_SHEEP_PURCHASE_TITLE,
+                        purchasedLabel = Strings.PURCHASE_STATE_PURCHASED,
+                        notPurchasedLabel = Strings.PURCHASE_STATE_NOT_PURCHASED,
+                        purchaseState = purchaseState,
+                        onPurchase = onPurchase
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = Dimens.spacingMedium),
+                        color = AppColors.TextPrimary.copy(alpha = 0.2f)
+                    )
+
+                    UpgradeRow(
+                        entitlementId = PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT,
+                        productId = PurchaseCatalog.COLORFUL_SHEEP_PRODUCT,
+                        title = Strings.COLORFUL_SHEEP_TITLE,
+                        description = Strings.COLORFUL_SHEEP_DESCRIPTION_DETAIL,
+                        activeLabel = Strings.COLORFUL_SHEEP_ACTIVE,
+                        thankYou = Strings.COLORFUL_SHEEP_THANK_YOU,
+                        buyTitle = Strings.COLORFUL_SHEEP_PURCHASE_TITLE,
+                        purchasedLabel = Strings.COLORFUL_SHEEP_STATE_PURCHASED,
+                        notPurchasedLabel = Strings.COLORFUL_SHEEP_STATE_NOT_PURCHASED,
+                        purchaseState = purchaseState,
+                        onPurchase = onPurchase
+                    )
+
+                    Spacer(modifier = Modifier.height(Dimens.spacingLarge))
+
+                    OutlinedButton(
+                        onClick = onRestorePurchases,
+                        enabled = purchaseState.operation == PurchaseOperation.IDLE &&
+                            purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) != EntitlementState.CHECKING,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(Dimens.buttonHeight),
+                        shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = AppColors.ButtonBackgroundAlpha
+                        )
+                    ) {
+                        Text(
+                            text = if (purchaseState.operation == PurchaseOperation.RESTORING) {
+                                Strings.PURCHASE_RESTORING
+                            } else {
+                                Strings.RESTORE_PURCHASES
+                            },
+                            fontSize = Dimens.fontSizeLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = AppColors.TextPrimary
+                        )
+                    }
+
+                    purchaseState.errorMessage?.let { message ->
                         Spacer(modifier = Modifier.height(Dimens.spacingMedium))
 
-                        UpgradeRow(
-                            entitlementId = PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT,
-                            productId = PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT,
-                            title = Strings.UNLIMITED_SHEEP_TITLE,
-                            description = Strings.UNLIMITED_SHEEP_DESCRIPTION_DETAIL,
-                            activeLabel = Strings.UNLIMITED_SHEEP_ACTIVE,
-                            thankYou = Strings.UNLIMITED_SHEEP_THANK_YOU,
-                            buyTitle = Strings.UNLIMITED_SHEEP_PURCHASE_TITLE,
-                            purchasedLabel = Strings.PURCHASE_STATE_PURCHASED,
-                            notPurchasedLabel = Strings.PURCHASE_STATE_NOT_PURCHASED,
-                            purchaseState = purchaseState,
-                            onPurchase = onPurchase
+                        Text(
+                            text = message,
+                            fontSize = Dimens.fontSizeSmall,
+                            color = AppColors.TextMuted,
+                            lineHeight = Dimens.lineHeightMedium
                         )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = Dimens.spacingMedium),
-                            color = AppColors.TextPrimary.copy(alpha = 0.2f)
-                        )
-
-                        UpgradeRow(
-                            entitlementId = PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT,
-                            productId = PurchaseCatalog.COLORFUL_SHEEP_PRODUCT,
-                            title = Strings.COLORFUL_SHEEP_TITLE,
-                            description = Strings.COLORFUL_SHEEP_DESCRIPTION_DETAIL,
-                            activeLabel = Strings.COLORFUL_SHEEP_ACTIVE,
-                            thankYou = Strings.COLORFUL_SHEEP_THANK_YOU,
-                            buyTitle = Strings.COLORFUL_SHEEP_PURCHASE_TITLE,
-                            purchasedLabel = Strings.COLORFUL_SHEEP_STATE_PURCHASED,
-                            notPurchasedLabel = Strings.COLORFUL_SHEEP_STATE_NOT_PURCHASED,
-                            purchaseState = purchaseState,
-                            onPurchase = onPurchase
-                        )
-
-                        Spacer(modifier = Modifier.height(Dimens.spacingLarge))
-
-                        OutlinedButton(
-                            onClick = onRestorePurchases,
-                            enabled = purchaseState.operation == PurchaseOperation.IDLE &&
-                                purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) != EntitlementState.CHECKING,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(Dimens.buttonHeight),
-                            shape = RoundedCornerShape(Dimens.buttonCornerRadius),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = AppColors.ButtonBackgroundAlpha
-                            )
-                        ) {
-                            Text(
-                                text = if (purchaseState.operation == PurchaseOperation.RESTORING) {
-                                    Strings.PURCHASE_RESTORING
-                                } else {
-                                    Strings.RESTORE_PURCHASES
-                                },
-                                fontSize = Dimens.fontSizeLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = AppColors.TextPrimary
-                            )
-                        }
-
-                        purchaseState.errorMessage?.let { message ->
-                            Spacer(modifier = Modifier.height(Dimens.spacingMedium))
-
-                            Text(
-                                text = message,
-                                fontSize = Dimens.fontSizeSmall,
-                                color = AppColors.TextMuted,
-                                lineHeight = Dimens.lineHeightMedium
-                            )
-                        }
-
-                        if (FeatureFlags.LOCAL_TEST_MODE) {
-                            Spacer(modifier = Modifier.height(Dimens.spacingMedium))
-
-                            Text(
-                                text = Strings.LOCAL_TEST_MODE_MARKER,
-                                fontSize = Dimens.fontSizeSmall,
-                                color = AppColors.TextMuted,
-                                lineHeight = Dimens.lineHeightMedium
-                            )
-                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
             }
+
+            Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
 
             Button(
                 onClick = onInviteFriendsClick,
@@ -461,7 +446,7 @@ private fun UpgradeRow(
             purchaseState.operation == PurchaseOperation.RESTORING -> Strings.PURCHASE_RESTORING
             entitlement == EntitlementState.CHECKING -> Strings.PURCHASE_LOADING
             product != null -> "$buyTitle · ${product.localizedPrice}"
-            purchaseState.productsUnavailable -> Strings.PURCHASE_UNAVAILABLE
+            purchaseState.isProductUnavailable(productId) -> Strings.PURCHASE_UNAVAILABLE
             else -> Strings.PURCHASE_LOADING
         }
 
@@ -535,7 +520,6 @@ fun SettingsScreenPreview() {
         onPurchase = {},
         onRestorePurchases = {},
         versionLabel = "2.0.0 (1)",
-        limitedSheepEnabled = true,
         purchaseState = PurchaseState(),
         onBack = {}
     )

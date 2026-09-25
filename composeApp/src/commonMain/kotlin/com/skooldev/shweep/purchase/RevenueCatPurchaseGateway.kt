@@ -124,7 +124,8 @@ class RevenueCatPurchaseGateway(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: PurchasesException) {
-                listener?.onRestoreCompleted(emptyMap())
+                // Do not report an empty ownership map: a failed restore must not revoke access.
+                listener?.onRestoreFailed(RESTORE_FAILED_MESSAGE)
             }
         }
     }
@@ -153,7 +154,8 @@ class RevenueCatPurchaseGateway(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: PurchasesException) {
-            listener?.onEntitlementsChanged(emptyMap())
+            // Leave entitlements unknown rather than reporting them as not purchased. Counting then
+            // falls back to the local allowance until RevenueCat can confirm ownership.
         }
 
         try {
@@ -201,5 +203,6 @@ class RevenueCatPurchaseGateway(
 
     private companion object {
         const val PURCHASE_FAILED_MESSAGE = "Purchase could not be completed"
+        const val RESTORE_FAILED_MESSAGE = "Restore could not be completed"
     }
 }

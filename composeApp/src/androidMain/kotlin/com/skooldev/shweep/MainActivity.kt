@@ -21,27 +21,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        purchaseGateway = if (FeatureFlags.LOCAL_TEST_MODE) {
-            MockStorePurchaseGateway()
-        } else {
-            RevenueCatPurchaseGateway(RevenueCatConfig.ANDROID_SDK_KEY)
-        }
+        purchaseGateway = RevenueCatPurchaseGateway(RevenueCatConfig.ANDROID_SDK_KEY)
 
         setContent {
             App(
                 purchaseGateway = purchaseGateway,
                 visibilityMonitor = AndroidAppVisibilityMonitor()
             )
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (
-            FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED &&
-            ::purchaseGateway.isInitialized
-        ) {
-            purchaseGateway.refreshEntitlements()
         }
     }
 }

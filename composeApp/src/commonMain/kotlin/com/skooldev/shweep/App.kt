@@ -6,7 +6,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
-import com.skooldev.shweep.data.DailySheepQuotaRepositoryImpl
+import com.skooldev.shweep.data.DataStoreFreeSheepUsageRepository
 import com.skooldev.shweep.data.SessionEndReason
 import com.skooldev.shweep.data.SessionRepositoryImpl
 import com.skooldev.shweep.data.SettingsRepositoryImpl
@@ -14,7 +14,6 @@ import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.data.createDataStore
 import com.skooldev.shweep.data.effectiveSheepColor
 import com.skooldev.shweep.data.toArtwork
-import com.skooldev.shweep.purchase.DisabledStorePurchaseGateway
 import com.skooldev.shweep.purchase.MockStorePurchaseGateway
 import com.skooldev.shweep.purchase.PurchaseCatalog
 import com.skooldev.shweep.purchase.PurchaseManager
@@ -49,19 +48,15 @@ fun App(
     visibilityMonitor: AppVisibilityMonitor
 ) {
     MaterialTheme {
-        val limitedSheepEnabled = FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED
         var currentScreen by remember { mutableStateOf(Screen.Start) }
 
         val dataStore = remember { createDataStore() }
         val sessionRepository = remember(dataStore) { SessionRepositoryImpl(dataStore) }
         val settingsRepository = remember(dataStore) { SettingsRepositoryImpl(dataStore) }
-        val dailySheepQuotaRepository = remember(dataStore) { DailySheepQuotaRepositoryImpl(dataStore) }
+        val freeSheepUsageRepository = remember(dataStore) { DataStoreFreeSheepUsageRepository(dataStore) }
 
-        val effectiveGateway = remember(purchaseGateway, limitedSheepEnabled) {
-            if (limitedSheepEnabled) purchaseGateway else DisabledStorePurchaseGateway()
-        }
-        val purchaseManager = remember(effectiveGateway) {
-            PurchaseManager(effectiveGateway)
+        val purchaseManager = remember(purchaseGateway) {
+            PurchaseManager(purchaseGateway)
         }
         val purchaseState by purchaseManager.state.collectAsState()
 
@@ -79,25 +74,24 @@ fun App(
             coordinator.recoverOrphanedSession()
         }
 
-        DisposableEffect(purchaseManager, limitedSheepEnabled) {
-            if (limitedSheepEnabled) {
-                purchaseManager.start()
-            }
+        DisposableEffect(purchaseManager) {
+            purchaseManager.start()
             onDispose {
-                if (limitedSheepEnabled) {
-                    purchaseManager.stop()
-                }
+                purchaseManager.stop()
             }
         }
 
         LaunchedEffect(visibilityMonitor, currentScreen) {
             visibilityMonitor.events.collect { event ->
-                if (currentScreen == Screen.Counting) {
-                    when (event) {
-                        AppVisibilityEvent.Background -> {
+                when (event) {
+                    AppVisibilityEvent.Background -> {
+                        if (currentScreen == Screen.Counting) {
                             coordinator.onBackground()
                         }
-                        AppVisibilityEvent.Foreground -> {
+                    }
+                    AppVisibilityEvent.Foreground -> {
+                        purchaseManager.refresh()
+                        if (currentScreen == Screen.Counting) {
                             when (coordinator.onForeground()) {
                                 CountingSessionCoordinator.ForegroundResult.SessionEnded -> {
                                     currentScreen = Screen.Start
@@ -125,8 +119,7 @@ fun App(
         val seenUpdateNoticeVersion by settingsRepository.seenUpdateNoticeVersion.collectAsState(
             initial = UPDATE_NOTICE_NOT_LOADED
         )
-        val showUpdateNotice = limitedSheepEnabled &&
-            seenUpdateNoticeVersion != UPDATE_NOTICE_NOT_LOADED &&
+        val showUpdateNotice = seenUpdateNoticeVersion != UPDATE_NOTICE_NOT_LOADED &&
             seenUpdateNoticeVersion != FeatureFlags.UPDATE_NOTICE_VERSION
 
         when (currentScreen) {
@@ -148,8 +141,7 @@ fun App(
                         currentScreen = Screen.Start
                     },
                     sessionRepository = sessionRepository,
-                    dailySheepQuotaRepository = dailySheepQuotaRepository,
-                    limitedSheepEnabled = limitedSheepEnabled,
+                    freeSheepUsageRepository = freeSheepUsageRepository,
                     purchaseState = purchaseState,
                     onPurchase = { purchaseManager.purchase(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) },
                     onRestore = { purchaseManager.restore() },
@@ -186,7 +178,6 @@ fun App(
                     onPurchase = { productId -> purchaseManager.purchase(productId) },
                     onRestorePurchases = { purchaseManager.restore() },
                     versionLabel = versionLabel,
-                    limitedSheepEnabled = limitedSheepEnabled,
                     purchaseState = purchaseState,
                     onBack = { currentScreen = Screen.Start }
                 )

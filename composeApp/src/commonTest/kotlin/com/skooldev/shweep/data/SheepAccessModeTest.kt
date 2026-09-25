@@ -7,28 +7,18 @@ import kotlin.test.assertEquals
 class SheepAccessModeTest {
 
     @Test
-    fun disabledLimitAlwaysGrantsUnlimited() {
-        EntitlementState.entries.forEach { entitlement ->
-            assertEquals(
-                SheepAccessMode.UNLIMITED,
-                resolveSheepAccessMode(limitedSheepEnabled = false, unlimitedSheepEntitlement = entitlement)
-            )
-        }
-    }
-
-    @Test
     fun purchasedEntitlementGrantsUnlimited() {
         assertEquals(
             SheepAccessMode.UNLIMITED,
-            resolveSheepAccessMode(limitedSheepEnabled = true, unlimitedSheepEntitlement = EntitlementState.PURCHASED)
+            resolveSheepAccessMode(EntitlementState.PURCHASED)
         )
     }
 
     @Test
-    fun checkingEntitlementVerifiesOptimistically() {
+    fun checkingEntitlementFallsBackToTheLocalAllowance() {
         assertEquals(
             SheepAccessMode.VERIFYING_PURCHASE,
-            resolveSheepAccessMode(limitedSheepEnabled = true, unlimitedSheepEntitlement = EntitlementState.CHECKING)
+            resolveSheepAccessMode(EntitlementState.CHECKING)
         )
     }
 
@@ -36,7 +26,7 @@ class SheepAccessModeTest {
     fun notPurchasedStaysLimited() {
         assertEquals(
             SheepAccessMode.LIMITED,
-            resolveSheepAccessMode(limitedSheepEnabled = true, unlimitedSheepEntitlement = EntitlementState.NOT_PURCHASED)
+            resolveSheepAccessMode(EntitlementState.NOT_PURCHASED)
         )
     }
 }

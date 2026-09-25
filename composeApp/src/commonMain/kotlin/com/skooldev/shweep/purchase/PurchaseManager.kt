@@ -19,12 +19,16 @@ class PurchaseManager(
             _state.value = _state.value.copy(
                 products = products,
                 productsUnavailable = false,
+                productsLoadCompleted = true,
                 errorMessage = null
             )
         }
 
         override fun onProductsUnavailable() {
-            _state.value = _state.value.copy(productsUnavailable = true)
+            _state.value = _state.value.copy(
+                productsUnavailable = true,
+                productsLoadCompleted = true
+            )
         }
 
         override fun onEntitlementsChanged(entitlements: Map<String, EntitlementState>) {
@@ -67,6 +71,15 @@ class PurchaseManager(
                 operation = PurchaseOperation.IDLE,
                 pendingProductId = null,
                 errorMessage = if (found) null else NO_PURCHASE_FOUND_MESSAGE
+            )
+        }
+
+        override fun onRestoreFailed(message: String) {
+            // Keep the last known entitlements; a transient restore failure must not revoke access.
+            _state.value = _state.value.copy(
+                operation = PurchaseOperation.IDLE,
+                pendingProductId = null,
+                errorMessage = message
             )
         }
     }

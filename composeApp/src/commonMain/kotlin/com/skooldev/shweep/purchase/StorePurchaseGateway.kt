@@ -8,6 +8,7 @@ interface StorePurchaseListener {
     fun onPurchaseCancelled(productId: String)
     fun onPurchaseFailed(productId: String, message: String)
     fun onRestoreCompleted(entitlements: Map<String, EntitlementState>)
+    fun onRestoreFailed(message: String)
 }
 
 /**

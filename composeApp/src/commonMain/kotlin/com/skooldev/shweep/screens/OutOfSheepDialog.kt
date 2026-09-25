@@ -14,7 +14,6 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import com.skooldev.shweep.FeatureFlags
 import com.skooldev.shweep.purchase.EntitlementState
 import com.skooldev.shweep.purchase.PurchaseCatalog
 import com.skooldev.shweep.purchase.PurchaseOperation
@@ -26,22 +25,27 @@ import com.skooldev.shweep.ui.theme.Strings
 @OptIn(ExperimentalTime::class)
 @Composable
 fun OutOfSheepDialog(
-    nextResetEpochMillis: Long,
+    cooldownEndsAtEpochMillis: Long,
     purchaseState: PurchaseState,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
     onDismiss: () -> Unit,
     onResetReached: () -> Unit
 ) {
-    var remainingMillis by remember {
-        mutableLongStateOf(
-            (nextResetEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
-        )
+    fun remaining(): Long =
+        (cooldownEndsAtEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
+
+    var remainingMillis by remember(cooldownEndsAtEpochMillis) {
+        mutableLongStateOf(remaining())
     }
 
-    LaunchedEffect(nextResetEpochMillis) {
-        while (remainingMillis > 0) {
-            remainingMillis = (nextResetEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
+    LaunchedEffect(cooldownEndsAtEpochMillis) {
+        if (remaining() <= 0L) {
+            onResetReached()
+            return@LaunchedEffect
+        }
+        while (true) {
+            remainingMillis = remaining()
             if (remainingMillis <= 0L) {
                 onResetReached()
                 break
@@ -105,17 +109,6 @@ fun OutOfSheepDialog(
                     lineHeight = Dimens.lineHeightMedium
                 )
 
-                if (FeatureFlags.LOCAL_TEST_MODE) {
-                    Spacer(modifier = Modifier.height(Dimens.spacingSmall))
-
-                    Text(
-                        text = Strings.LOCAL_TEST_MODE_MARKER,
-                        fontSize = Dimens.fontSizeSmall,
-                        color = AppColors.TextMuted,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
                 Spacer(modifier = Modifier.height(Dimens.spacingXXLarge))
 
                 Surface(
@@ -156,7 +149,8 @@ fun OutOfSheepDialog(
                         Strings.PURCHASE_LOADING
                     purchaseState.product(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) != null ->
                         "${Strings.UNLIMITED_SHEEP_PURCHASE_TITLE} · ${purchaseState.product(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT)!!.localizedPrice}"
-                    purchaseState.productsUnavailable -> Strings.PURCHASE_UNAVAILABLE
+                    purchaseState.isProductUnavailable(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) ->
+                        Strings.PURCHASE_UNAVAILABLE
                     else -> Strings.PURCHASE_LOADING
                 }
 
@@ -253,7 +247,7 @@ fun OutOfSheepDialog(
 @Composable
 fun OutOfSheepDialogPreview() {
     OutOfSheepDialog(
-        nextResetEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
+        cooldownEndsAtEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
         purchaseState = PurchaseState(),
         onPurchase = {},
         onRestore = {},

@@ -137,4 +137,39 @@ class PurchaseManagerTest {
 
         assertEquals("No purchase found", manager.state.value.errorMessage)
     }
+
+    @Test
+    fun restoreFailurePreservesKnownEntitlements() {
+        val gateway = FakeGateway()
+        val manager = PurchaseManager(gateway)
+        manager.start()
+        gateway.listener.onEntitlementsChanged(
+            gateway.entitlements(EntitlementState.PURCHASED, EntitlementState.NOT_PURCHASED)
+        )
+
+        manager.restore()
+        gateway.listener.onRestoreFailed("network")
+
+        assertTrue(manager.state.value.hasUnlimitedSheep)
+        assertFalse(manager.state.value.hasColorfulSheep)
+        assertEquals(PurchaseOperation.IDLE, manager.state.value.operation)
+        assertEquals("network", manager.state.value.errorMessage)
+    }
+
+    @Test
+    fun productLoadCompletionMarksMissingProductsUnavailable() {
+        val gateway = FakeGateway()
+        val manager = PurchaseManager(gateway)
+        manager.start()
+
+        gateway.listener.onProductsLoaded(
+            mapOf(
+                PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT to
+                    PurchasableProduct(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT, "\$0.99")
+            )
+        )
+
+        assertFalse(manager.state.value.isProductUnavailable(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT))
+        assertTrue(manager.state.value.isProductUnavailable(PurchaseCatalog.COLORFUL_SHEEP_PRODUCT))
+    }
 }

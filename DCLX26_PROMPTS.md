@@ -76,6 +76,8 @@ It follows the same structure as the [legacy documentation](https://github.com/V
 ![Prompt 10](art/prompts/10.png)
 *Planning the daily allowance, noon reset, and out-of-sheep dialog*
 
+> Historical note: this proposal was superseded. The implemented design uses a fixed local allowance of 35 sheep and a 24-hour cooldown that starts when the 35th sheep is counted. There is no noon reset, no adaptive 100-to-50 reduction, and the allowance is stored only on the device.
+
 ### Prompt 11: Limited Sheep Feature Flag
 **User**: Asked to plan a feature flag that must be changed in order for the limited sheep option to be applied.
 

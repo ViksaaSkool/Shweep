@@ -1,7 +1,6 @@
 package com.skooldev.shweep.ui.theme
 
-import com.skooldev.shweep.data.SHEEP_QUOTA_LIMIT
-import com.skooldev.shweep.data.SHEEP_QUOTA_WINDOW_MILLIS
+import com.skooldev.shweep.data.FREE_SHEEP_LIMIT
 
 object Strings {
     // App Name
@@ -60,13 +59,13 @@ object Strings {
     // Update notice (shown once on the first launch of the version that adds the allowance)
     const val UPDATE_NOTICE_TITLE = "An update to your flock"
     val UPDATE_NOTICE_MESSAGE: String
-        get() = "Shweep now includes $SHEEP_QUOTA_LIMIT free sheep. Once you use them, your allowance resets 24 hours later. Keep counting without the wait with the optional one-time Unlimited Sheep purchase.\n\nWe've updated our Privacy Policy and Terms to explain these changes and how RevenueCat manages purchases."
+        get() = "Shweep now includes $FREE_SHEEP_LIMIT free sheep. The 24-hour countdown starts when you count the last free sheep. Two independent optional one-time purchases are available: Unlimited Sheep removes the allowance while its entitlement is active, and Colorful Sheep unlocks rainbow sheep without changing the allowance.\n\nWe've updated our Privacy Policy and Terms to explain both purchases and how RevenueCat manages them."
     const val UPDATE_NOTICE_CONTINUE = "Continue"
 
     // Out of Sheep Dialog
     const val OUT_OF_SHEEP_TITLE = "No sheep left"
     val OUT_OF_SHEEP_MESSAGE: String
-        get() = "You've spent all $SHEEP_QUOTA_LIMIT free sheep. Your flock returns in 24 hours, or you can make counting unlimited with a one-time purchase."
+        get() = "You've spent all $FREE_SHEEP_LIMIT free sheep. Your flock returns when the countdown ends, or you can make counting unlimited with a one-time purchase."
     const val OUT_OF_SHEEP_TIMER_LABEL = "until your flock returns"
     const val WAIT_UNTIL_RESET = "Wait for my flock"
 
@@ -84,23 +83,19 @@ object Strings {
 
     // Unlimited Sheep
     const val UNLIMITED_SHEEP_TITLE = "Unlimited sheep"
-    const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Count as many sheep as you like, whenever you like. Restorable with the same store account."
-    const val UNLIMITED_SHEEP_ACTIVE = "Active on this device"
+    const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Removes the free allowance while this purchase is active. Restorable with the same store account."
+    const val UNLIMITED_SHEEP_ACTIVE = "Unlocked"
     const val UNLIMITED_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your winding-down flock - unlimited."
     const val UNLIMITED_SHEEP_PURCHASE_TITLE = "Buy Unlimited Sheep"
 
     // Colorful Sheep
     const val COLORFUL_SHEEP_TITLE = "Colorful sheep"
     const val COLORFUL_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Unlock rainbow sheep for your meadow. Restorable with the same store account."
-    const val COLORFUL_SHEEP_ACTIVE = "Active on this device"
+    const val COLORFUL_SHEEP_ACTIVE = "Unlocked"
     const val COLORFUL_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your rainbow flock."
     const val COLORFUL_SHEEP_PURCHASE_TITLE = "Unlock Colorful Sheep"
     const val COLORFUL_SHEEP_STATE_PURCHASED = "Unlocked"
     const val COLORFUL_SHEEP_STATE_NOT_PURCHASED = "Locked"
-
-    // Local test mode
-    val LOCAL_TEST_MODE_MARKER: String
-        get() = "Local test mode: $SHEEP_QUOTA_LIMIT sheep / ${SHEEP_QUOTA_WINDOW_MILLIS / 60_000} min"
 
     // History
     const val HISTORY_SUMMARY_TITLE = "Average wind-down time"

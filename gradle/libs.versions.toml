@@ -19,11 +19,13 @@ composeIcons = "1.6.11"
 datastore = "1.1.1"
 okio = "3.9.0"
 kotlinx-datetime = "0.7.0"
+kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.6.3"
 purchases-kmp = "3.9.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
