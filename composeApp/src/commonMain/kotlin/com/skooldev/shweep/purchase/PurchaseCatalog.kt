@@ -13,7 +13,7 @@ package com.skooldev.shweep.purchase
  * Adding a new paid feature means adding an entitlement, a product, and a feature gate — not
  * redesigning the purchase system.
  */
-object PurchaseCatalog {
+object  PurchaseCatalog {
 
     // RevenueCat entitlement identifiers.
     const val UNLIMITED_SHEEP_ENTITLEMENT = "unlimited_sheep"

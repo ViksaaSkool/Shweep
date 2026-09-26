@@ -70,15 +70,18 @@ internal object FreeSheepUsagePolicy {
     /**
      * The cooldown starts when the last free sheep is spent, so the countdown is already running
      * if the user closes the app right after using the allowance.
+     *
+     * A stale cooldown start timestamp (e.g. carried over from an earlier build's exhaustion
+     * under the same persisted key) is always re-anchored to the moment the allowance is
+     * actually spent.  The dismiss-and-retry never-extension guarantee lives in
+     * [startCooldownIfExhausted] and is untouched.
      */
     private fun startCooldownOnLastSheep(
         resolved: StoredFreeSheepUsage,
         nowEpochMillis: Long
     ): StoredFreeSheepUsage {
         val consumed = resolved.copy(usedSheepCount = resolved.usedSheepCount + 1)
-        if (consumed.usedSheepCount >= FREE_SHEEP_LIMIT &&
-            consumed.cooldownStartedAtEpochMillis <= 0L
-        ) {
+        if (consumed.usedSheepCount >= FREE_SHEEP_LIMIT) {
             return consumed.copy(cooldownStartedAtEpochMillis = nowEpochMillis)
         }
         return consumed

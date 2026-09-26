@@ -191,4 +191,22 @@ class FreeSheepUsagePolicyTest {
         assertEquals(0, resolved.usedSheepCount)
         assertEquals(0L, resolved.cooldownStartedAtEpochMillis)
     }
+
+    @Test
+    fun staleCooldownIsRestampedByTheLastSheep() {
+        val staleAt = start - 8 * hour
+        val stored = StoredFreeSheepUsage(
+            usedSheepCount = FREE_SHEEP_LIMIT - 1,
+            cooldownStartedAtEpochMillis = staleAt
+        )
+
+        val step = FreeSheepUsagePolicy.consume(stored, start)
+        val usage = assertIs<ConsumeSheepStep.Allowed>(step).usage
+
+        assertEquals(start, usage.cooldownStartedAtEpochMillis)
+        assertEquals(
+            start + FREE_SHEEP_COOLDOWN_MILLIS,
+            FreeSheepUsagePolicy.toUsage(usage).cooldownEndsAtEpochMillis
+        )
+    }
 }
