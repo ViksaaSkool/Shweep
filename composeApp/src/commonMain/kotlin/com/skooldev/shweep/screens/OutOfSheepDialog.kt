@@ -28,9 +28,10 @@ fun OutOfSheepDialog(
     cooldownEndsAtEpochMillis: Long,
     purchaseState: PurchaseState,
     onPurchase: () -> Unit,
-    onRestore: () -> Unit,
+    onRestore: (entitlementId: String) -> Unit,
     onDismiss: () -> Unit,
-    onResetReached: () -> Unit
+    onResetReached: () -> Unit,
+    onClearRestoreErrors: () -> Unit
 ) {
     fun remaining(): Long =
         (cooldownEndsAtEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
@@ -51,6 +52,12 @@ fun OutOfSheepDialog(
                 break
             }
             delay(1000L)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            onClearRestoreErrors()
         }
     }
 
@@ -166,7 +173,8 @@ fun OutOfSheepDialog(
                     shape = RoundedCornerShape(Dimens.buttonCornerRadius),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AppColors.Primary,
-                        disabledContainerColor = AppColors.Primary.copy(alpha = 0.4f)
+                        disabledContainerColor = AppColors.Primary.copy(alpha = 0.4f),
+                        disabledContentColor = AppColors.TextPrimary.copy(alpha = 0.7f)
                     )
                 ) {
                     Text(
@@ -180,10 +188,9 @@ fun OutOfSheepDialog(
 
                 Spacer(modifier = Modifier.height(Dimens.spacingMedium))
 
-                OutlinedButton(
-                    onClick = onRestore,
-                    enabled = purchaseState.operation == PurchaseOperation.IDLE &&
-                        purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) != EntitlementState.CHECKING,
+                 OutlinedButton(
+                    onClick = { onRestore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) },
+                    enabled = !purchaseState.isAnyRestoreRunning(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Dimens.buttonHeight),
@@ -193,7 +200,7 @@ fun OutOfSheepDialog(
                     )
                 ) {
                     Text(
-                        text = if (purchaseState.operation == PurchaseOperation.RESTORING) {
+                        text = if (purchaseState.isRestoring(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)) {
                             Strings.PURCHASE_RESTORING
                         } else {
                             Strings.RESTORE_PURCHASES
@@ -204,7 +211,7 @@ fun OutOfSheepDialog(
                     )
                 }
 
-                purchaseState.errorMessage?.let { message ->
+                purchaseState.restoreError(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)?.let { message ->
                     Spacer(modifier = Modifier.height(Dimens.spacingMedium))
 
                     Text(
@@ -250,8 +257,9 @@ fun OutOfSheepDialogPreview() {
         cooldownEndsAtEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
         purchaseState = PurchaseState(),
         onPurchase = {},
-        onRestore = {},
+        onRestore = { _ -> },
         onDismiss = {},
-        onResetReached = {}
+        onResetReached = {},
+        onClearRestoreErrors = {}
     )
 }

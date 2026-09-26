@@ -32,7 +32,9 @@ data class PurchaseState(
     val productsLoadCompleted: Boolean = false,
     val operation: PurchaseOperation = PurchaseOperation.IDLE,
     val pendingProductId: String? = null,
-    val errorMessage: String? = null
+    val pendingRestoreEntitlementId: String? = null,
+    val errorMessage: String? = null,
+    val restoreErrors: Map<String, String> = emptyMap()
 ) {
     fun entitlementState(entitlementId: String): EntitlementState =
         entitlements[entitlementId] ?: EntitlementState.CHECKING
@@ -62,4 +64,15 @@ data class PurchaseState(
         entitlementState(entitlementId) == EntitlementState.NOT_PURCHASED &&
             isProductLoaded(productId) &&
             operation == PurchaseOperation.IDLE
+
+    /** True when a restore operation is in progress for the given entitlement. */
+    fun isRestoring(entitlementId: String): Boolean =
+        operation == PurchaseOperation.RESTORING && pendingRestoreEntitlementId == entitlementId
+
+    /** True when any restore operation is in progress. */
+    fun isAnyRestoreRunning(): Boolean = operation == PurchaseOperation.RESTORING
+
+    /** Returns the restore error message for the given entitlement, if any. */
+    fun restoreError(entitlementId: String): String? =
+        restoreErrors[entitlementId]
 }

@@ -115,7 +115,7 @@ class RevenueCatPurchaseGateway(
         }
     }
 
-    override fun restorePurchases() {
+    override fun restorePurchases(entitlementId: String) {
         val activeScope = scope ?: return
 
         activeScope.launch {
@@ -125,7 +125,7 @@ class RevenueCatPurchaseGateway(
                 throw cancellation
             } catch (_: PurchasesException) {
                 // Do not report an empty ownership map: a failed restore must not revoke access.
-                listener?.onRestoreFailed(RESTORE_FAILED_MESSAGE)
+                listener?.onRestoreFailed(entitlementId, RESTORE_FAILED_MESSAGE)
             }
         }
     }

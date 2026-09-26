@@ -34,7 +34,7 @@ class MockStorePurchaseGateway(
         listener?.onEntitlementsChanged(entitlements())
     }
 
-    override fun restorePurchases() {
+    override fun restorePurchases(entitlementId: String) {
         listener?.onRestoreCompleted(entitlements())
     }
 

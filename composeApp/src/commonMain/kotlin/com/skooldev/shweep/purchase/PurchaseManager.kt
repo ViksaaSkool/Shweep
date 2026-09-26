@@ -35,8 +35,7 @@ class PurchaseManager(
             _state.value = _state.value.copy(
                 entitlements = entitlements,
                 operation = PurchaseOperation.IDLE,
-                pendingProductId = null,
-                errorMessage = null
+                pendingProductId = null
             )
         }
 
@@ -65,21 +64,39 @@ class PurchaseManager(
         }
 
         override fun onRestoreCompleted(entitlements: Map<String, EntitlementState>) {
-            val found = entitlements.values.any { it == EntitlementState.PURCHASED }
+            val targetEntitlement = _state.value.pendingRestoreEntitlementId
+            val found = if (targetEntitlement != null) {
+                entitlements[targetEntitlement] == EntitlementState.PURCHASED
+            } else {
+                entitlements.values.any { it == EntitlementState.PURCHASED }
+            }
+            val newRestoreErrors = _state.value.restoreErrors.toMutableMap()
+            if (targetEntitlement != null) {
+                if (found) {
+                    newRestoreErrors.remove(targetEntitlement)
+                } else {
+                    newRestoreErrors[targetEntitlement] = NO_PURCHASE_FOUND_MESSAGE
+                }
+            }
             _state.value = _state.value.copy(
                 entitlements = entitlements,
                 operation = PurchaseOperation.IDLE,
                 pendingProductId = null,
-                errorMessage = if (found) null else NO_PURCHASE_FOUND_MESSAGE
+                pendingRestoreEntitlementId = null,
+                restoreErrors = newRestoreErrors
             )
         }
 
-        override fun onRestoreFailed(message: String) {
+        override fun onRestoreFailed(productId: String, message: String) {
+            val targetEntitlement = _state.value.pendingRestoreEntitlementId
+            val newRestoreErrors = _state.value.restoreErrors.toMutableMap()
+            targetEntitlement?.let { newRestoreErrors[it] = message }
             // Keep the last known entitlements; a transient restore failure must not revoke access.
             _state.value = _state.value.copy(
                 operation = PurchaseOperation.IDLE,
                 pendingProductId = null,
-                errorMessage = message
+                pendingRestoreEntitlementId = null,
+                restoreErrors = newRestoreErrors
             )
         }
     }
@@ -98,13 +115,21 @@ class PurchaseManager(
         gateway.purchase(productId)
     }
 
-    fun restore() {
+    fun restore(entitlementId: String) {
         if (_state.value.operation != PurchaseOperation.IDLE) return
         _state.value = _state.value.copy(
             operation = PurchaseOperation.RESTORING,
-            errorMessage = null
+            pendingRestoreEntitlementId = entitlementId,
+            restoreErrors = _state.value.restoreErrors.toMutableMap().also { it.remove(entitlementId) }
         )
-        gateway.restorePurchases()
+        gateway.restorePurchases(entitlementId)
+    }
+
+    /** Clears all per-entitlement restore error messages. */
+    fun clearRestoreErrors() {
+        if (_state.value.restoreErrors.isNotEmpty()) {
+            _state.value = _state.value.copy(restoreErrors = emptyMap())
+        }
     }
 
     fun refresh() {

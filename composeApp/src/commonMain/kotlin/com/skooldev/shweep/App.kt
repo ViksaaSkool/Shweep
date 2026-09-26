@@ -144,7 +144,8 @@ fun App(
                     freeSheepUsageRepository = freeSheepUsageRepository,
                     purchaseState = purchaseState,
                     onPurchase = { purchaseManager.purchase(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) },
-                    onRestore = { purchaseManager.restore() },
+                    onRestore = { entitlementId -> purchaseManager.restore(entitlementId) },
+                    onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
                     sheepArtwork = renderedColor.toArtwork(),
                     coordinator = coordinator
                 )
@@ -176,7 +177,8 @@ fun App(
                         shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
                     onPurchase = { productId -> purchaseManager.purchase(productId) },
-                    onRestorePurchases = { purchaseManager.restore() },
+                    onRestorePurchases = { entitlementId -> purchaseManager.restore(entitlementId) },
+                    onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
                     versionLabel = versionLabel,
                     purchaseState = purchaseState,
                     onBack = { currentScreen = Screen.Start }

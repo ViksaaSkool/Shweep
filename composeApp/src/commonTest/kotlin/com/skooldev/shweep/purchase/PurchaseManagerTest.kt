@@ -3,6 +3,7 @@ package com.skooldev.shweep.purchase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PurchaseManagerTest {
@@ -10,7 +11,7 @@ class PurchaseManagerTest {
     private class FakeGateway : StorePurchaseGateway {
         lateinit var listener: StorePurchaseListener
         val requestedProducts = mutableListOf<String>()
-        var restoreRequested = false
+        val restoreRequested = mutableListOf<String>()
 
         override fun start(listener: StorePurchaseListener) {
             this.listener = listener
@@ -31,8 +32,8 @@ class PurchaseManagerTest {
             requestedProducts += productId
         }
 
-        override fun restorePurchases() {
-            restoreRequested = true
+        override fun restorePurchases(entitlementId: String) {
+            restoreRequested += entitlementId
         }
 
         override fun stop() {}
@@ -116,8 +117,8 @@ class PurchaseManagerTest {
         val manager = PurchaseManager(gateway)
         manager.start()
 
-        manager.restore()
-        assertTrue(gateway.restoreRequested)
+        manager.restore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
+        assertTrue(gateway.restoreRequested.contains(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT))
         gateway.listener.onRestoreCompleted(
             gateway.entitlements(EntitlementState.PURCHASED, EntitlementState.PURCHASED)
         )
@@ -132,10 +133,10 @@ class PurchaseManagerTest {
         val manager = PurchaseManager(gateway)
         manager.start()
 
-        manager.restore()
+        manager.restore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
         gateway.listener.onRestoreCompleted(gateway.none())
 
-        assertEquals("No purchase found", manager.state.value.errorMessage)
+        assertEquals("No purchase found", manager.state.value.restoreErrors[PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT])
     }
 
     @Test
@@ -147,13 +148,65 @@ class PurchaseManagerTest {
             gateway.entitlements(EntitlementState.PURCHASED, EntitlementState.NOT_PURCHASED)
         )
 
-        manager.restore()
-        gateway.listener.onRestoreFailed("network")
+        manager.restore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
+        gateway.listener.onRestoreFailed(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT, "network")
 
         assertTrue(manager.state.value.hasUnlimitedSheep)
         assertFalse(manager.state.value.hasColorfulSheep)
         assertEquals(PurchaseOperation.IDLE, manager.state.value.operation)
-        assertEquals("network", manager.state.value.errorMessage)
+        assertEquals("network", manager.state.value.restoreErrors[PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT])
+    }
+
+    @Test
+    fun restoreReportsSuccessOnlyForTargetEntitlement() {
+        val gateway = FakeGateway()
+        val manager = PurchaseManager(gateway)
+        manager.start()
+        gateway.listener.onEntitlementsChanged(
+            gateway.entitlements(EntitlementState.PURCHASED, EntitlementState.NOT_PURCHASED)
+        )
+
+        manager.restore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
+        gateway.listener.onRestoreCompleted(gateway.entitlements(
+            EntitlementState.PURCHASED, EntitlementState.NOT_PURCHASED
+        ))
+
+        assertTrue(manager.state.value.hasUnlimitedSheep)
+        assertFalse(manager.state.value.hasColorfulSheep)
+        assertNull(manager.state.value.errorMessage)
+    }
+
+    @Test
+    fun colorfulRestoreErrorAppearsOnlyUnderColorfulKey() {
+        val gateway = FakeGateway()
+        val manager = PurchaseManager(gateway)
+        manager.start()
+
+        // No purchases
+        gateway.listener.onEntitlementsChanged(gateway.none())
+
+        // Restore Colorful Sheep
+        manager.restore(PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT)
+        gateway.listener.onRestoreCompleted(gateway.none())
+
+        // Error should only be under Colorful key
+        assertEquals("No purchase found", manager.state.value.restoreErrors[PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT])
+        assertNull(manager.state.value.restoreErrors[PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT])
+    }
+
+    @Test
+    fun unlimitedRestoreErrorAppearsOnlyUnderUnlimitedKey() {
+        val gateway = FakeGateway()
+        val manager = PurchaseManager(gateway)
+        manager.start()
+
+        gateway.listener.onEntitlementsChanged(gateway.none())
+
+        manager.restore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
+        gateway.listener.onRestoreCompleted(gateway.none())
+
+        assertEquals("No purchase found", manager.state.value.restoreErrors[PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT])
+        assertNull(manager.state.value.restoreErrors[PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT])
     }
 
     @Test

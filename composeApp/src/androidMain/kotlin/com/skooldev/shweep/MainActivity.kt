@@ -1,5 +1,6 @@
 package com.skooldev.shweep
 
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,7 +22,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        purchaseGateway = RevenueCatPurchaseGateway(RevenueCatConfig.ANDROID_SDK_KEY)
+        val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        purchaseGateway = RevenueCatPurchaseGateway(
+            RevenueCatConfig.androidSdkKey(isDebug)
+        )
 
         setContent {
             App(

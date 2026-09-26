@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,13 +48,20 @@ fun SettingsScreen(
     onContactSupportClick: () -> Unit,
     onInviteFriendsClick: () -> Unit,
     onPurchase: (String) -> Unit,
-    onRestorePurchases: () -> Unit,
+    onRestorePurchases: (entitlementId: String) -> Unit,
+    onClearRestoreErrors: () -> Unit,
     versionLabel: String,
     purchaseState: PurchaseState,
     onBack: () -> Unit
 ) {
     var pendingColor by remember { mutableStateOf(selectedColor) }
     val hasChanges = pendingColor != selectedColor
+
+    DisposableEffect(Unit) {
+        onDispose {
+            onClearRestoreErrors()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -216,10 +224,47 @@ fun SettingsScreen(
                         onPurchase = onPurchase
                     )
 
+                    Spacer(modifier = Modifier.height(Dimens.spacingLarge))
+
+                    OutlinedButton(
+                        onClick = { onRestorePurchases(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) },
+                        enabled = !purchaseState.isAnyRestoreRunning(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(Dimens.buttonHeight),
+                        shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = AppColors.ButtonBackgroundAlpha
+                        )
+                    ) {
+                        Text(
+                            text = if (purchaseState.isRestoring(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)) {
+                                Strings.PURCHASE_RESTORING
+                            } else {
+                                Strings.RESTORE_PURCHASES
+                            },
+                            fontSize = Dimens.fontSizeLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = AppColors.TextPrimary
+                        )
+                    }
+
+                    purchaseState.restoreError(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)?.let { message ->
+                        Spacer(modifier = Modifier.height(Dimens.spacingSmall))
+                        Text(
+                            text = message,
+                            fontSize = Dimens.fontSizeSmall,
+                            color = AppColors.TextMuted,
+                            lineHeight = Dimens.lineHeightMedium
+                        )
+                    }
+
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = Dimens.spacingMedium),
                         color = AppColors.TextPrimary.copy(alpha = 0.2f)
                     )
+
+                    Spacer(modifier = Modifier.height(Dimens.spacingLarge))
 
                     UpgradeRow(
                         entitlementId = PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT,
@@ -238,9 +283,8 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(Dimens.spacingLarge))
 
                     OutlinedButton(
-                        onClick = onRestorePurchases,
-                        enabled = purchaseState.operation == PurchaseOperation.IDLE &&
-                            purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) != EntitlementState.CHECKING,
+                        onClick = { onRestorePurchases(PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT) },
+                        enabled = !purchaseState.isAnyRestoreRunning(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(Dimens.buttonHeight),
@@ -250,7 +294,7 @@ fun SettingsScreen(
                         )
                     ) {
                         Text(
-                            text = if (purchaseState.operation == PurchaseOperation.RESTORING) {
+                            text = if (purchaseState.isRestoring(PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT)) {
                                 Strings.PURCHASE_RESTORING
                             } else {
                                 Strings.RESTORE_PURCHASES
@@ -261,9 +305,8 @@ fun SettingsScreen(
                         )
                     }
 
-                    purchaseState.errorMessage?.let { message ->
-                        Spacer(modifier = Modifier.height(Dimens.spacingMedium))
-
+                    purchaseState.restoreError(PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT)?.let { message ->
+                        Spacer(modifier = Modifier.height(Dimens.spacingSmall))
                         Text(
                             text = message,
                             fontSize = Dimens.fontSizeSmall,
@@ -397,7 +440,8 @@ private fun UpgradeRow(
             text = title,
             fontSize = Dimens.fontSizeLarge,
             fontWeight = FontWeight.Medium,
-            color = AppColors.TextPrimary
+            color = AppColors.TextPrimary,
+            modifier = Modifier.weight(1f)
         )
 
         Text(
@@ -408,7 +452,8 @@ private fun UpgradeRow(
             },
             fontSize = Dimens.fontSizeLarge,
             fontWeight = FontWeight.Bold,
-            color = AppColors.TextPrimary
+            color = AppColors.TextPrimary,
+            modifier = Modifier.padding(start = Dimens.spacingMedium)
         )
     }
 
@@ -458,7 +503,9 @@ private fun UpgradeRow(
                 .height(Dimens.buttonHeight),
             shape = RoundedCornerShape(Dimens.buttonCornerRadius),
             colors = ButtonDefaults.buttonColors(
-                containerColor = AppColors.Primary
+                containerColor = AppColors.Primary,
+                disabledContainerColor = AppColors.Primary.copy(alpha = 0.4f),
+                disabledContentColor = AppColors.TextPrimary.copy(alpha = 0.7f)
             )
         ) {
             Text(
@@ -518,7 +565,8 @@ fun SettingsScreenPreview() {
         onContactSupportClick = {},
         onInviteFriendsClick = {},
         onPurchase = {},
-        onRestorePurchases = {},
+        onRestorePurchases = { _ -> },
+        onClearRestoreErrors = {},
         versionLabel = "2.0.0 (1)",
         purchaseState = PurchaseState(),
         onBack = {}

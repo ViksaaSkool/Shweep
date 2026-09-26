@@ -112,7 +112,9 @@ fun SheepColorDialog(
                         .height(Dimens.buttonHeight),
                     shape = RoundedCornerShape(Dimens.buttonCornerRadius),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AppColors.Primary
+                        containerColor = AppColors.Primary,
+                        disabledContainerColor = AppColors.Primary.copy(alpha = 0.4f),
+                        disabledContentColor = AppColors.TextPrimary.copy(alpha = 0.7f)
                     )
                 ) {
                     Text(

@@ -8,7 +8,7 @@ interface StorePurchaseListener {
     fun onPurchaseCancelled(productId: String)
     fun onPurchaseFailed(productId: String, message: String)
     fun onRestoreCompleted(entitlements: Map<String, EntitlementState>)
-    fun onRestoreFailed(message: String)
+    fun onRestoreFailed(productId: String, message: String)
 }
 
 /**
@@ -19,6 +19,6 @@ interface StorePurchaseGateway {
     fun start(listener: StorePurchaseListener)
     fun refreshEntitlements()
     fun purchase(productId: String)
-    fun restorePurchases()
+    fun restorePurchases(entitlementId: String)
     fun stop()
 }

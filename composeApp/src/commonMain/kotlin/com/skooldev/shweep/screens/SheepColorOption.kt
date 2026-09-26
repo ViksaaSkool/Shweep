@@ -79,6 +79,7 @@ fun SheepColorOption(
                     )
                 )
             } else if (locked && lockLabel != null) {
+                Spacer(modifier = Modifier.width(Dimens.spacingSmall))
                 Text(
                     text = lockLabel,
                     fontSize = Dimens.fontSizeSmall,

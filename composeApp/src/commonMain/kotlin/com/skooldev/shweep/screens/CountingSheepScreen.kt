@@ -65,7 +65,8 @@ fun CountingSheepScreen(
     freeSheepUsageRepository: FreeSheepUsageRepository,
     purchaseState: PurchaseState,
     onPurchase: () -> Unit,
-    onRestore: () -> Unit,
+    onRestore: (entitlementId: String) -> Unit,
+    onClearRestoreErrors: () -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
     coordinator: CountingSessionCoordinator
 ) {
@@ -460,7 +461,8 @@ fun CountingSheepScreen(
                 onResetReached = {
                     exhaustedUsage = null
                     scope.launch { freeSheepUsageRepository.refresh() }
-                }
+                },
+                onClearRestoreErrors = onClearRestoreErrors
             )
         }
     }
@@ -548,7 +550,8 @@ fun CountingSheepScreenPreview() {
         freeSheepUsageRepository = MockFreeSheepUsageRepository(),
         purchaseState = PurchaseState(),
         onPurchase = {},
-        onRestore = {},
+        onRestore = { _ -> },
+        onClearRestoreErrors = {},
         coordinator = CountingSessionCoordinator(
             sessionRepository = MockSessionRepository(),
             scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main)
