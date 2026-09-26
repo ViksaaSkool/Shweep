@@ -17,7 +17,7 @@ object RevenueCatConfig {
     const val DEBUG_SDK_KEY = "test_lpINQsBjwXqLswXwaeZhaxPGuwZ"
 
     /** Android production key from the RevenueCat dashboard. */
-    const val ANDROID_SDK_KEY = "goog_REPLACE_WITH_REVENUECAT_ANDROID_KEY"
+    const val ANDROID_SDK_KEY = "goog_sLpsZUQHFejIzyuPrIAspsqJNMN"
 
     /** iOS production key from the RevenueCat dashboard. */
     const val IOS_SDK_KEY = "appl_REPLACE_WITH_REVENUECAT_IOS_KEY"
