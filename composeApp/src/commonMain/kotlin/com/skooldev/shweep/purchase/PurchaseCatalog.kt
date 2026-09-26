@@ -20,8 +20,9 @@ object  PurchaseCatalog {
     const val COLORFUL_SHEEP_ENTITLEMENT = "colorful_sheep"
 
     // Store product identifiers (Google Play / App Store).
-    const val UNLIMITED_SHEEP_PRODUCT = "unlimited_sheep"
-    const val COLORFUL_SHEEP_PRODUCT = "colorful_sheep"
+    const val UNLIMITED_SHEEP_PRODUCT = "shweep_unlimited_sheep"
+    const val COLORFUL_SHEEP_PRODUCT = "shweep_colorful_sheep"
+
 
     val entitlementIds: List<String> = listOf(
         UNLIMITED_SHEEP_ENTITLEMENT,
