@@ -107,7 +107,7 @@ composable. `commonTest` covers the policy and coordinator logic that is pure Ko
 
 # Download
 
-<img src="https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Google Play" draggable="false" style="pointer-events:none;user-select:none;">
+<a href="https://play.google.com/store/apps/details?id=com.skooldev.shweep"><img src="https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Google Play" draggable="false" style="pointer-events:none;user-select:none;"></a>
 <img src="https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white" alt="App Store" draggable="false" style="pointer-events:none;user-select:none;">
 
 
