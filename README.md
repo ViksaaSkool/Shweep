@@ -85,6 +85,26 @@ python3 tools/render_background_frames.py
 # then re-encode with ffmpeg (see script header)
 ```
 
+# Architecture
+
+Shweep is a **CMP (Compose Multiplatform)** app: a single `composeApp` module where one
+Kotlin Multiplatform codebase and one Compose UI tree serve both Android and iOS. Platform
+differences are confined to `expect`/`actual` declarations and platform entry points, so the
+feature code has no Android- or iOS-specific branches.
+
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| App shell | `App.kt` | Compose entry point and screen state; both platforms call the same `App(purchaseGateway, visibilityMonitor)` |
+| UI | `screens/**`, `ui/theme/**` | Start, Counting, History and Settings screens, plus the sheep simulation and renderer |
+| Domain/state | `CountingSessionCoordinator`, `FeatureFlags`, `MonotonicClock` | Session lifecycle, release-time switches, timing |
+| Data | `data/**` | Session, settings and free-sheep-allowance repositories over multiplatform DataStore |
+| Purchases | `purchase/**` | `StorePurchaseGateway` interface, RevenueCat implementation, and `PurchaseManager` |
+| Platform seams | `commonMain` `expect` + `androidMain`/`iosMain` `actual` | `getPlatform()`, `shareText()`, `createDataStore()`, and the `AppVisibilityMonitor` implementations |
+
+Platform code is intentionally thin: `MainActivity` (Android) and `MainViewController` (iOS)
+only build the store gateway and visibility monitor, then hand off to the shared `App`
+composable. `commonTest` covers the policy and coordinator logic that is pure Kotlin.
+
 # Download
 
 <img src="https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Google Play" draggable="false" style="pointer-events:none;user-select:none;">
