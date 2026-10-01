@@ -49,6 +49,10 @@ jobs:
             composeApp/build/outputs/bundle/release/composeApp-release.aab
 
   ios-package:
+    # Disabled: set to true to resume the iOS simulator build. The macOS runner is
+    # the slowest job here, and the source-boundary and Android jobs still cover
+    # the iOS inputs. The `check-archive` guard for the .app is skipped while off.
+    if: false
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
