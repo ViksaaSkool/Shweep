@@ -1,5 +1,7 @@
 package com.skooldev.shweep.ui.theme
 
+import com.skooldev.shweep.data.FREE_SHEEP_LIMIT
+
 object Strings {
     // App Name
     const val APP_NAME = "Shweep"
@@ -34,6 +36,8 @@ object Strings {
     const val SHEEP_COLOR_TITLE = "Sheep color"
     const val SHEEP_COLOR_WHITE = "White sheep"
     const val SHEEP_COLOR_BLACK = "Black sheep"
+    const val SHEEP_COLOR_COLORFUL = "Colorful sheep"
+    const val SHEEP_COLOR_LOCKED = "Locked"
     const val PRIVACY_POLICY = "Privacy Policy"
     const val TERMS_OF_SERVICE = "Terms of Service"
     const val LINK_OPENS_IN_BROWSER = "Opens in your browser"
@@ -46,12 +50,52 @@ object Strings {
     const val CHOOSE_SHEEP_TITLE = "Choose your sheep"
     const val CHOOSE_SHEEP_CONTINUE = "Continue"
 
+    // Settings - About
+    const val ABOUT_TITLE = "About Shweep"
+    const val ABOUT_VERSION_LABEL = "Version"
+    const val CONTACT_SUPPORT = "Contact support"
+    const val CONTACT_SUPPORT_SUBTITLE = "Opens your email app"
+
+    // Update notice (shown once on the first launch of the version that adds the allowance)
+    const val UPDATE_NOTICE_TITLE = "An update to your flock"
+    val UPDATE_NOTICE_MESSAGE: String
+        get() = "Shweep now includes $FREE_SHEEP_LIMIT free sheep. The 24-hour countdown starts when you count the last free sheep. Two independent optional one-time purchases are available: Unlimited Sheep removes the allowance while its entitlement is active, and Colorful Sheep unlocks rainbow sheep without changing the allowance.\n\nWe've updated our Privacy Policy and Terms to explain both purchases and how RevenueCat manages them."
+    const val UPDATE_NOTICE_CONTINUE = "Continue"
+
     // Out of Sheep Dialog
-    const val OUT_OF_SHEEP_TITLE = "No sheep left today"
-    const val OUT_OF_SHEEP_MESSAGE = "You have used all of today's sheep. Your allowance resets at local noon."
-    const val OUT_OF_SHEEP_TIMER_LABEL = "until more sheep arrive"
-    const val UNLIMITED_SHEEP_COMING_SOON = "Unlimited sheep - Coming soon"
-    const val WAIT_UNTIL_RESET = "Wait until reset"
+    const val OUT_OF_SHEEP_TITLE = "No sheep left"
+    val OUT_OF_SHEEP_MESSAGE: String
+        get() = "You've spent all $FREE_SHEEP_LIMIT free sheep. Your flock returns when the countdown ends, or you can make counting unlimited with a one-time purchase."
+    const val OUT_OF_SHEEP_TIMER_LABEL = "until your flock returns"
+    const val WAIT_UNTIL_RESET = "Wait for my flock"
+
+    // Purchases (shared labels)
+    const val UPGRADES_TITLE = "Upgrades"
+    const val PURCHASE_STATE_PURCHASED = "Purchased"
+    const val PURCHASE_STATE_NOT_PURCHASED = "Not purchased"
+    const val PURCHASE_STATE_CHECKING = "Checking..."
+    const val PURCHASE_STATE_UNAVAILABLE = "Unavailable"
+    const val PURCHASE_LOADING = "Loading purchase..."
+    const val PURCHASE_PURCHASING = "Purchasing..."
+    const val PURCHASE_RESTORING = "Restoring..."
+    const val PURCHASE_UNAVAILABLE = "Purchase unavailable"
+    const val RESTORE_PURCHASES = "Restore purchases"
+
+    // Unlimited Sheep
+    const val UNLIMITED_SHEEP_TITLE = "Unlimited sheep"
+    const val UNLIMITED_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Removes the free allowance while this purchase is active. Restorable with the same store account."
+    const val UNLIMITED_SHEEP_ACTIVE = "Unlocked"
+    const val UNLIMITED_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your winding-down flock - unlimited."
+    const val UNLIMITED_SHEEP_PURCHASE_TITLE = "Buy Unlimited Sheep"
+
+    // Colorful Sheep
+    const val COLORFUL_SHEEP_TITLE = "Colorful sheep"
+    const val COLORFUL_SHEEP_DESCRIPTION_DETAIL = "One-time purchase. Unlock rainbow sheep for your meadow. Restorable with the same store account."
+    const val COLORFUL_SHEEP_ACTIVE = "Unlocked"
+    const val COLORFUL_SHEEP_THANK_YOU = "Thank you for buying! Enjoy your rainbow flock."
+    const val COLORFUL_SHEEP_PURCHASE_TITLE = "Unlock Colorful Sheep"
+    const val COLORFUL_SHEEP_STATE_PURCHASED = "Unlocked"
+    const val COLORFUL_SHEEP_STATE_NOT_PURCHASED = "Locked"
 
     // History
     const val HISTORY_SUMMARY_TITLE = "Average wind-down time"

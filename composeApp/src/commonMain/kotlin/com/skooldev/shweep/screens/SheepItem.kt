@@ -2,7 +2,8 @@ package com.skooldev.shweep.screens
 
 enum class SheepArtwork {
     WHITE,
-    BLACK
+    BLACK,
+    COLORFUL
 }
 
 enum class SheepMotionState {

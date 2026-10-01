@@ -267,6 +267,16 @@ body.legal-page{
 }
 .legal nav a{color:var(--text-muted);text-decoration:none;font-size:.9rem}
 .legal nav a:hover{color:var(--text)}
+.legal-notice{
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.04);
+    border-radius:14px;
+    padding:18px 20px;
+    margin:0 0 32px;
+}
+.legal-notice p{color:var(--text-secondary);margin-bottom:10px;line-height:1.7}
+.legal-notice p:last-child{margin-bottom:0}
+.legal-notice strong{color:var(--text)}
 
 /* ========================
    404
