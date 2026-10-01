@@ -112,7 +112,7 @@ Store metadata and declarations still to be done by hand before the production r
 - [ ] App content → Data safety, exactly:
   - [ ] Does your app collect or share any of the required user data types? **Yes**
   - [ ] Is all of the user data collected by your app encrypted in transit? **Yes**
-  - [ ] Do you provide a way for users to request that their data is deleted? **Yes** (support email in the policy)
+  - [ ] Do you provide a way for users to request that their data is deleted? **No** — Shweep cannot delete the anonymous RevenueCat records, so the policy does not promise a deletion route. Answer according to what you can actually do.
   - [ ] Data type: **Financial info → Purchase history**
   - [ ] Collected, **not** shared
   - [ ] Not processed ephemerally
