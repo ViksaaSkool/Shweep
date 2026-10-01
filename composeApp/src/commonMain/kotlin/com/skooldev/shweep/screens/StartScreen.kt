@@ -17,6 +17,7 @@ import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_start
 import shweep.composeapp.generated.resources.background_start_black
+import shweep.composeapp.generated.resources.background_start_colorful
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.AppColors
@@ -35,10 +36,10 @@ fun StartScreen(
         // Background image with sheep and landscape
         Image(
             painter = painterResource(
-                if (sheepColor == SheepColor.BLACK) {
-                    Res.drawable.background_start_black
-                } else {
-                    Res.drawable.background_start
+                when (sheepColor) {
+                    SheepColor.WHITE -> Res.drawable.background_start
+                    SheepColor.BLACK -> Res.drawable.background_start_black
+                    SheepColor.COLORFUL -> Res.drawable.background_start_colorful
                 }
             ),
             contentDescription = Strings.CD_BACKGROUND_IMAGE,

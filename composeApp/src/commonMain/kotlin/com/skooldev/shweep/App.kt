@@ -34,12 +34,6 @@ enum class Screen {
     Settings
 }
 
-/**
- * Sentinel for the update-notice preference while DataStore has not emitted yet, so the notice
- * never flashes for a user who has already dismissed it.
- */
-private const val UPDATE_NOTICE_NOT_LOADED = "\u0000not-loaded"
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Suppress("DEPRECATION")
 @Composable
@@ -119,8 +113,7 @@ fun App(
         val seenUpdateNoticeVersion by settingsRepository.seenUpdateNoticeVersion.collectAsState(
             initial = UPDATE_NOTICE_NOT_LOADED
         )
-        val showUpdateNotice = seenUpdateNoticeVersion != UPDATE_NOTICE_NOT_LOADED &&
-            seenUpdateNoticeVersion != FeatureFlags.UPDATE_NOTICE_VERSION
+        val showUpdateNotice = shouldShowUpdateNotice(seenUpdateNoticeVersion)
 
         when (currentScreen) {
             Screen.Start -> {
