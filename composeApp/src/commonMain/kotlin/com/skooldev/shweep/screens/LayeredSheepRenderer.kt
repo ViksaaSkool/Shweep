@@ -16,6 +16,7 @@ import shweep.composeapp.generated.resources.sheep_black_front_far_leg
 import shweep.composeapp.generated.resources.sheep_black_front_near_leg
 import shweep.composeapp.generated.resources.sheep_black_rear_far_leg
 import shweep.composeapp.generated.resources.sheep_black_rear_near_leg
+import shweep.composeapp.generated.resources.sheep_colorful_body
 import shweep.composeapp.generated.resources.sheep_white_body
 import shweep.composeapp.generated.resources.sheep_white_front_far_leg
 import shweep.composeapp.generated.resources.sheep_white_front_near_leg
@@ -56,6 +57,16 @@ internal fun rememberBlackSheepRigImages(): SheepRigImages = SheepRigImages(
     rearFar = imageResource(Res.drawable.sheep_black_rear_far_leg)
 )
 
+/** Colorful sheep share the white sheep's head and legs; only the wool (body) is rainbow. */
+@Composable
+internal fun rememberColorfulSheepRigImages(): SheepRigImages = SheepRigImages(
+    body = imageResource(Res.drawable.sheep_colorful_body),
+    frontNear = imageResource(Res.drawable.sheep_white_front_near_leg),
+    frontFar = imageResource(Res.drawable.sheep_white_front_far_leg),
+    rearNear = imageResource(Res.drawable.sheep_white_rear_near_leg),
+    rearFar = imageResource(Res.drawable.sheep_white_rear_far_leg)
+)
+
 /**
  * Draws the whole flock on a single canvas.
  *
@@ -77,15 +88,21 @@ internal fun LayeredSheepCanvas(
     colorFilter: ColorFilter? = null
 ) {
     val whiteImages = rememberWhiteSheepRigImages()
-    val hasBlackSheep = sheepList.any { it.artwork == SheepArtwork.BLACK } || draggedSheep?.artwork == SheepArtwork.BLACK
+    val hasBlackSheep = sheepList.any { it.artwork == SheepArtwork.BLACK } ||
+        draggedSheep?.artwork == SheepArtwork.BLACK
+    val hasColorfulSheep = sheepList.any { it.artwork == SheepArtwork.COLORFUL } ||
+        draggedSheep?.artwork == SheepArtwork.COLORFUL
     val blackImages = if (hasBlackSheep) rememberBlackSheepRigImages() else null
+    val colorfulImages = if (hasColorfulSheep) rememberColorfulSheepRigImages() else null
 
     Canvas(modifier = modifier) {
         for (sheep in sheepList) {
-            drawSheep(sheep, sheepBaseSizePx, whiteImages, blackImages, colorFilter)
+            drawSheep(sheep, sheepBaseSizePx, whiteImages, blackImages, colorfulImages, colorFilter)
         }
 
-        draggedSheep?.let { drawSheep(it, sheepBaseSizePx, whiteImages, blackImages, colorFilter) }
+        draggedSheep?.let {
+            drawSheep(it, sheepBaseSizePx, whiteImages, blackImages, colorfulImages, colorFilter)
+        }
     }
 }
 
@@ -94,11 +111,13 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSheep(
     sheepBaseSizePx: Float,
     whiteImages: SheepRigImages,
     blackImages: SheepRigImages?,
+    colorfulImages: SheepRigImages?,
     colorFilter: ColorFilter? = null
 ) {
     val images = when (sheep.artwork) {
         SheepArtwork.WHITE -> whiteImages
         SheepArtwork.BLACK -> blackImages ?: return
+        SheepArtwork.COLORFUL -> colorfulImages ?: return
     }
 
     val pose = SheepGait.pose(

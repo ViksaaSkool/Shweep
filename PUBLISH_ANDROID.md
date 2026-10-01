@@ -4,6 +4,10 @@ This document covers the one-time manual setup and the automated flow that publi
 
 The automation lives in [`.github/workflows/publish-android.yml`](.github/workflows/publish-android.yml).
 
+> **Currently disabled.** The workflow job carries `if: false`, so pushes do not publish. Remove or change that condition only when Play publishing is intentionally resumed.
+
+> For a 2.0 release, update the version scheme first: `ANDROID_VERSION_NAME_PREFIX` should be `2.0`, and iOS `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig` must be bumped separately. The examples below use 1.x and are illustrative only.
+
 > Authentication uses **Google Workload Identity Federation**, so no long-lived service-account JSON key is stored in GitHub.
 
 ## What is automated

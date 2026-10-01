@@ -6,18 +6,24 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
-import com.skooldev.shweep.data.DailySheepQuotaRepositoryImpl
+import com.skooldev.shweep.data.DataStoreFreeSheepUsageRepository
 import com.skooldev.shweep.data.SessionEndReason
 import com.skooldev.shweep.data.SessionRepositoryImpl
 import com.skooldev.shweep.data.SettingsRepositoryImpl
 import com.skooldev.shweep.data.SheepColor
 import com.skooldev.shweep.data.createDataStore
+import com.skooldev.shweep.data.effectiveSheepColor
 import com.skooldev.shweep.data.toArtwork
+import com.skooldev.shweep.purchase.MockStorePurchaseGateway
+import com.skooldev.shweep.purchase.PurchaseCatalog
+import com.skooldev.shweep.purchase.PurchaseManager
+import com.skooldev.shweep.purchase.StorePurchaseGateway
 import com.skooldev.shweep.screens.CountingSheepScreen
 import com.skooldev.shweep.screens.HistoryScreen
 import com.skooldev.shweep.screens.SettingsScreen
 import com.skooldev.shweep.screens.SheepColorDialog
 import com.skooldev.shweep.screens.StartScreen
+import com.skooldev.shweep.screens.UpdateNoticeDialog
 import com.skooldev.shweep.ui.theme.Strings
 import kotlinx.coroutines.launch
 
@@ -32,19 +38,27 @@ enum class Screen {
 @Suppress("DEPRECATION")
 @Composable
 fun App(
+    purchaseGateway: StorePurchaseGateway,
     visibilityMonitor: AppVisibilityMonitor
 ) {
     MaterialTheme {
-        val limitedSheepEnabled = FeatureFlags.LIMITED_DAILY_SHEEP_ENABLED
         var currentScreen by remember { mutableStateOf(Screen.Start) }
 
         val dataStore = remember { createDataStore() }
         val sessionRepository = remember(dataStore) { SessionRepositoryImpl(dataStore) }
         val settingsRepository = remember(dataStore) { SettingsRepositoryImpl(dataStore) }
-        val dailySheepQuotaRepository = remember(dataStore) { DailySheepQuotaRepositoryImpl(dataStore) }
+        val freeSheepUsageRepository = remember(dataStore) { DataStoreFreeSheepUsageRepository(dataStore) }
+
+        val purchaseManager = remember(purchaseGateway) {
+            PurchaseManager(purchaseGateway)
+        }
+        val purchaseState by purchaseManager.state.collectAsState()
 
         val scope = rememberCoroutineScope()
         val uriHandler = LocalUriHandler.current
+
+        val platform = remember { getPlatform() }
+        val versionLabel = "${platform.appVersion} (${platform.appBuild})"
 
         val coordinator = remember(sessionRepository, scope) {
             CountingSessionCoordinator(sessionRepository, scope)
@@ -54,14 +68,24 @@ fun App(
             coordinator.recoverOrphanedSession()
         }
 
+        DisposableEffect(purchaseManager) {
+            purchaseManager.start()
+            onDispose {
+                purchaseManager.stop()
+            }
+        }
+
         LaunchedEffect(visibilityMonitor, currentScreen) {
             visibilityMonitor.events.collect { event ->
-                if (currentScreen == Screen.Counting) {
-                    when (event) {
-                        AppVisibilityEvent.Background -> {
+                when (event) {
+                    AppVisibilityEvent.Background -> {
+                        if (currentScreen == Screen.Counting) {
                             coordinator.onBackground()
                         }
-                        AppVisibilityEvent.Foreground -> {
+                    }
+                    AppVisibilityEvent.Foreground -> {
+                        purchaseManager.refresh()
+                        if (currentScreen == Screen.Counting) {
                             when (coordinator.onForeground()) {
                                 CountingSessionCoordinator.ForegroundResult.SessionEnded -> {
                                     currentScreen = Screen.Start
@@ -82,9 +106,14 @@ fun App(
         val selectedColor by settingsRepository.sheepColor.collectAsState(
             initial = SheepColor.WHITE
         )
+        val renderedColor = effectiveSheepColor(selectedColor, purchaseState.hasColorfulSheep)
         val hasChosenSheepColor by settingsRepository.hasChosenSheepColor.collectAsState(
             initial = true
         )
+        val seenUpdateNoticeVersion by settingsRepository.seenUpdateNoticeVersion.collectAsState(
+            initial = UPDATE_NOTICE_NOT_LOADED
+        )
+        val showUpdateNotice = shouldShowUpdateNotice(seenUpdateNoticeVersion)
 
         when (currentScreen) {
             Screen.Start -> {
@@ -95,7 +124,7 @@ fun App(
                     },
                     onHistoryClick = { currentScreen = Screen.History },
                     onSettingsClick = { currentScreen = Screen.Settings },
-                    sheepColor = selectedColor
+                    sheepColor = renderedColor
                 )
             }
             Screen.Counting -> {
@@ -105,9 +134,12 @@ fun App(
                         currentScreen = Screen.Start
                     },
                     sessionRepository = sessionRepository,
-                    dailySheepQuotaRepository = dailySheepQuotaRepository,
-                    limitedSheepEnabled = limitedSheepEnabled,
-                    sheepArtwork = selectedColor.toArtwork(),
+                    freeSheepUsageRepository = freeSheepUsageRepository,
+                    purchaseState = purchaseState,
+                    onPurchase = { purchaseManager.purchase(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) },
+                    onRestore = { entitlementId -> purchaseManager.restore(entitlementId) },
+                    onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
+                    sheepArtwork = renderedColor.toArtwork(),
                     coordinator = coordinator
                 )
             }
@@ -120,6 +152,7 @@ fun App(
             Screen.Settings -> {
                 SettingsScreen(
                     selectedColor = selectedColor,
+                    hasColorfulSheep = purchaseState.hasColorfulSheep,
                     onSaveColor = { color ->
                         scope.launch { settingsRepository.setSheepColor(color) }
                         currentScreen = Screen.Start
@@ -130,10 +163,17 @@ fun App(
                     onTermsOfServiceClick = {
                         uriHandler.openUri(AppLinks.TERMS_OF_SERVICE)
                     },
+                    onContactSupportClick = {
+                        uriHandler.openUri(AppLinks.CONTACT_SUPPORT)
+                    },
                     onInviteFriendsClick = {
                         shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
                     },
-                    limitedSheepEnabled = limitedSheepEnabled,
+                    onPurchase = { productId -> purchaseManager.purchase(productId) },
+                    onRestorePurchases = { entitlementId -> purchaseManager.restore(entitlementId) },
+                    onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
+                    versionLabel = versionLabel,
+                    purchaseState = purchaseState,
                     onBack = { currentScreen = Screen.Start }
                 )
             }
@@ -149,12 +189,28 @@ fun App(
         if (!hasChosenSheepColor) {
             SheepColorDialog(
                 selectedColor = selectedColor,
+                hasColorfulSheep = purchaseState.hasColorfulSheep,
                 onConfirm = { color ->
                     scope.launch {
                         settingsRepository.setSheepColor(color)
                         settingsRepository.markSheepColorChosen()
                     }
+                },
+                onPurchaseColorful = {
+                    purchaseManager.purchase(PurchaseCatalog.COLORFUL_SHEEP_PRODUCT)
                 }
+            )
+        }
+
+        if (showUpdateNotice) {
+            UpdateNoticeDialog(
+                onContinue = {
+                    scope.launch {
+                        settingsRepository.markUpdateNoticeSeen(FeatureFlags.UPDATE_NOTICE_VERSION)
+                    }
+                },
+                onPrivacyPolicy = { uriHandler.openUri(AppLinks.PRIVACY_POLICY) },
+                onTermsOfService = { uriHandler.openUri(AppLinks.TERMS_OF_SERVICE) }
             )
         }
     }
@@ -169,6 +225,7 @@ private class NoOpVisibilityMonitor : AppVisibilityMonitor {
 fun AppPreview() {
     MaterialTheme {
         App(
+            purchaseGateway = MockStorePurchaseGateway(),
             visibilityMonitor = NoOpVisibilityMonitor()
         )
     }

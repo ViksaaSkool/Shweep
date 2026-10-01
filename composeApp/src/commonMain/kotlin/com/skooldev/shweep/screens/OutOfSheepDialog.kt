@@ -14,6 +14,10 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import com.skooldev.shweep.purchase.EntitlementState
+import com.skooldev.shweep.purchase.PurchaseCatalog
+import com.skooldev.shweep.purchase.PurchaseOperation
+import com.skooldev.shweep.purchase.PurchaseState
 import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Dimens
 import com.skooldev.shweep.ui.theme.Strings
@@ -21,24 +25,39 @@ import com.skooldev.shweep.ui.theme.Strings
 @OptIn(ExperimentalTime::class)
 @Composable
 fun OutOfSheepDialog(
-    nextResetEpochMillis: Long,
+    cooldownEndsAtEpochMillis: Long,
+    purchaseState: PurchaseState,
+    onPurchase: () -> Unit,
+    onRestore: (entitlementId: String) -> Unit,
     onDismiss: () -> Unit,
-    onResetReached: () -> Unit
+    onResetReached: () -> Unit,
+    onClearRestoreErrors: () -> Unit
 ) {
-    var remainingMillis by remember {
-        mutableLongStateOf(
-            (nextResetEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
-        )
+    fun remaining(): Long =
+        (cooldownEndsAtEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
+
+    var remainingMillis by remember(cooldownEndsAtEpochMillis) {
+        mutableLongStateOf(remaining())
     }
 
-    LaunchedEffect(nextResetEpochMillis) {
-        while (remainingMillis > 0) {
-            remainingMillis = (nextResetEpochMillis - Clock.System.now().toEpochMilliseconds()).coerceAtLeast(0)
+    LaunchedEffect(cooldownEndsAtEpochMillis) {
+        if (remaining() <= 0L) {
+            onResetReached()
+            return@LaunchedEffect
+        }
+        while (true) {
+            remainingMillis = remaining()
             if (remainingMillis <= 0L) {
                 onResetReached()
                 break
             }
             delay(1000L)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            onClearRestoreErrors()
         }
     }
 
@@ -63,19 +82,22 @@ fun OutOfSheepDialog(
                 modifier = Modifier.padding(Dimens.dialogPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = Strings.OUT_OF_SHEEP_TITLE,
                         fontSize = Dimens.fontSizeXXLarge,
                         fontWeight = FontWeight.Bold,
-                        color = AppColors.TextPrimary
+                        color = AppColors.TextPrimary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
                     )
 
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
                         Text(
                             text = Strings.HISTORY_CLOSE,
                             fontSize = Dimens.fontSizeXLarge,
@@ -125,6 +147,84 @@ fun OutOfSheepDialog(
 
                 Spacer(modifier = Modifier.height(Dimens.spacingXXLarge))
 
+                val buyButtonText = when {
+                    purchaseState.operation == PurchaseOperation.PURCHASING &&
+                        purchaseState.pendingProductId == PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT ->
+                        Strings.PURCHASE_PURCHASING
+                    purchaseState.operation == PurchaseOperation.RESTORING -> Strings.PURCHASE_RESTORING
+                    purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) == EntitlementState.CHECKING ->
+                        Strings.PURCHASE_LOADING
+                    purchaseState.product(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) != null ->
+                        "${Strings.UNLIMITED_SHEEP_PURCHASE_TITLE} · ${purchaseState.product(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT)!!.localizedPrice}"
+                    purchaseState.isProductUnavailable(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) ->
+                        Strings.PURCHASE_UNAVAILABLE
+                    else -> Strings.PURCHASE_LOADING
+                }
+
+                Button(
+                    onClick = onPurchase,
+                    enabled = purchaseState.canBuy(
+                        PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT,
+                        PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.buttonHeight),
+                    shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.Primary,
+                        disabledContainerColor = AppColors.Primary.copy(alpha = 0.4f),
+                        disabledContentColor = AppColors.TextPrimary.copy(alpha = 0.7f)
+                    )
+                ) {
+                    Text(
+                        text = buyButtonText,
+                        fontSize = Dimens.fontSizeLarge,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Dimens.spacingMedium))
+
+                 OutlinedButton(
+                    onClick = { onRestore(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) },
+                    enabled = !purchaseState.isAnyRestoreRunning(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.buttonHeight),
+                    shape = RoundedCornerShape(Dimens.buttonCornerRadius),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = AppColors.ButtonBackgroundAlpha
+                    )
+                ) {
+                    Text(
+                        text = if (purchaseState.isRestoring(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)) {
+                            Strings.PURCHASE_RESTORING
+                        } else {
+                            Strings.RESTORE_PURCHASES
+                        },
+                        fontSize = Dimens.fontSizeLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.TextPrimary
+                    )
+                }
+
+                purchaseState.restoreError(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)?.let { message ->
+                    Spacer(modifier = Modifier.height(Dimens.spacingMedium))
+
+                    Text(
+                        text = message,
+                        fontSize = Dimens.fontSizeSmall,
+                        color = AppColors.TextMuted,
+                        textAlign = TextAlign.Center,
+                        lineHeight = Dimens.lineHeightMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Dimens.spacingSmall))
+
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier
@@ -154,8 +254,12 @@ fun OutOfSheepDialog(
 @Composable
 fun OutOfSheepDialogPreview() {
     OutOfSheepDialog(
-        nextResetEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
+        cooldownEndsAtEpochMillis = Clock.System.now().toEpochMilliseconds() + 5 * 3_600_000,
+        purchaseState = PurchaseState(),
+        onPurchase = {},
+        onRestore = { _ -> },
         onDismiss = {},
-        onResetReached = {}
+        onResetReached = {},
+        onClearRestoreErrors = {}
     )
 }

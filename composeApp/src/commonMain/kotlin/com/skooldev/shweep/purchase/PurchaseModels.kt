@@ -1,0 +1,78 @@
+package com.skooldev.shweep.purchase
+
+/** A store product resolved from RevenueCat, with its localized price. */
+data class PurchasableProduct(
+    val productId: String,
+    val localizedPrice: String
+)
+
+/** Ownership status of a single RevenueCat entitlement. */
+enum class EntitlementState {
+    CHECKING,
+    NOT_PURCHASED,
+    PURCHASED
+}
+
+enum class PurchaseOperation {
+    IDLE,
+    PURCHASING,
+    RESTORING
+}
+
+/**
+ * UI-facing cache of RevenueCat's [com.revenuecat.purchases.kmp.models.CustomerInfo].
+ *
+ * This is not an authority: every feature derives its own access from the relevant entitlement
+ * ([hasUnlimitedSheep], [hasColorfulSheep]). There is intentionally no single "pro"/"paid" flag.
+ */
+data class PurchaseState(
+    val entitlements: Map<String, EntitlementState> = emptyMap(),
+    val products: Map<String, PurchasableProduct> = emptyMap(),
+    val productsUnavailable: Boolean = false,
+    val productsLoadCompleted: Boolean = false,
+    val operation: PurchaseOperation = PurchaseOperation.IDLE,
+    val pendingProductId: String? = null,
+    val pendingRestoreEntitlementId: String? = null,
+    val errorMessage: String? = null,
+    val restoreErrors: Map<String, String> = emptyMap()
+) {
+    fun entitlementState(entitlementId: String): EntitlementState =
+        entitlements[entitlementId] ?: EntitlementState.CHECKING
+
+    val hasUnlimitedSheep: Boolean
+        get() = entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT) == EntitlementState.PURCHASED
+
+    val hasColorfulSheep: Boolean
+        get() = entitlementState(PurchaseCatalog.COLORFUL_SHEEP_ENTITLEMENT) == EntitlementState.PURCHASED
+
+    fun product(productId: String): PurchasableProduct? = products[productId]
+
+    fun isProductLoaded(productId: String): Boolean = products.containsKey(productId)
+
+    /**
+     * True once product loading has finished (successfully or not) and this specific product is
+     * still missing. Lets the UI show "unavailable" instead of "loading" forever when only one of
+     * several products failed to resolve.
+     */
+    fun isProductUnavailable(productId: String): Boolean =
+        !isProductLoaded(productId) && (productsUnavailable || productsLoadCompleted)
+
+    fun isPurchased(entitlementId: String): Boolean =
+        entitlementState(entitlementId) == EntitlementState.PURCHASED
+
+    fun canBuy(entitlementId: String, productId: String): Boolean =
+        entitlementState(entitlementId) == EntitlementState.NOT_PURCHASED &&
+            isProductLoaded(productId) &&
+            operation == PurchaseOperation.IDLE
+
+    /** True when a restore operation is in progress for the given entitlement. */
+    fun isRestoring(entitlementId: String): Boolean =
+        operation == PurchaseOperation.RESTORING && pendingRestoreEntitlementId == entitlementId
+
+    /** True when any restore operation is in progress. */
+    fun isAnyRestoreRunning(): Boolean = operation == PurchaseOperation.RESTORING
+
+    /** Returns the restore error message for the given entitlement, if any. */
+    fun restoreError(entitlementId: String): String? =
+        restoreErrors[entitlementId]
+}
