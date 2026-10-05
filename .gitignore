@@ -36,3 +36,6 @@ firebase-adminsdk-*.json
 /STORE_NOTES.md
 /MONETIZATION_SETUP.md
 /art/assets/
+/tools/render_promo_frames.py
+/tools/render_promo_reels_frames.py
+/tools/render_promo_v2_frames.py
