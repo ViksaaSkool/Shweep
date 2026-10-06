@@ -1,14 +1,24 @@
 package com.skooldev.shweep.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Dimens
 
 internal data class SheepIconData(
@@ -18,9 +28,16 @@ internal data class SheepIconData(
     val alpha: Float
 )
 
+/**
+ * A small flock of [iconCount] sheep, where each sheep stands for
+ * [SHEEP_PER_ICON] counted sheep. When the count exceeds what the flock can
+ * show, [overflowCount] appears as a "+n" badge so a long session is never
+ * silently indistinguishable from a short one.
+ */
 @Composable
 internal fun MiniSheepFlock(
     iconCount: Int,
+    overflowCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val woolColor = Color(0xFFF5E8DD)
@@ -30,20 +47,39 @@ internal fun MiniSheepFlock(
 
     val positions = rememberSheepIconPositions(iconCount)
 
-    Canvas(
+    Box(
         modifier = modifier
-            .size(Dimens.historyFlockWidth, Dimens.historyFlockHeight)
+            .size(Dimens.historyFlockWidth, Dimens.historyFlockHeight),
+        contentAlignment = Alignment.TopEnd
     ) {
-        for (icon in positions) {
-            drawSheepIcon(
-                centerX = icon.x,
-                centerY = icon.y,
-                size = icon.size,
-                alpha = icon.alpha,
-                woolColor = woolColor,
-                shadowColor = shadowColor,
-                faceColor = faceColor,
-                outlineColor = outlineColor
+        Canvas(modifier = Modifier.matchParentSize()) {
+            for (icon in positions) {
+                drawSheepIcon(
+                    centerX = icon.x,
+                    centerY = icon.y,
+                    size = icon.size,
+                    alpha = icon.alpha,
+                    woolColor = woolColor,
+                    shadowColor = shadowColor,
+                    faceColor = faceColor,
+                    outlineColor = outlineColor
+                )
+            }
+        }
+
+        if (overflowCount > 0) {
+            Text(
+                text = "+$overflowCount",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.TextMuted,
+                modifier = Modifier
+                    .offset(x = 4.dp, y = 2.dp)
+                    .background(
+                        color = AppColors.CardBackgroundMediumAlpha,
+                        shape = RoundedCornerShape(6.dp)
+                    )
+                    .padding(horizontal = 4.dp, vertical = 1.dp)
             )
         }
     }
@@ -73,11 +109,11 @@ private fun rememberSheepIconPositions(count: Int): List<SheepIconData> {
                 SheepIconData(80f, 14f, 24f, 0.8f)
             )
             else -> listOf(
-                SheepIconData(20f, 38f, 28f, 1f),
-                SheepIconData(56f, 38f, 28f, 1f),
-                SheepIconData(90f, 38f, 28f, 1f),
-                SheepIconData(38f, 16f, 24f, 0.8f),
-                SheepIconData(72f, 16f, 24f, 0.8f)
+                SheepIconData(20f, 40f, 28f, 1f),
+                SheepIconData(54f, 40f, 28f, 1f),
+                SheepIconData(88f, 40f, 28f, 1f),
+                SheepIconData(36f, 14f, 24f, 0.8f),
+                SheepIconData(64f, 14f, 24f, 0.8f)
             )
         }
     }

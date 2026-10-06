@@ -106,7 +106,8 @@ internal fun HistorySessionCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     MiniSheepFlock(
-                        iconCount = session.displayedSheepIcons
+                        iconCount = session.displayedSheepIcons,
+                        overflowCount = session.overflowSheepCount
                     )
 
                     Spacer(modifier = Modifier.height(Dimens.spacingSmall))
@@ -142,8 +143,8 @@ fun HistorySessionCardPreview() {
             durationText = "16 min",
             durationMinutes = 16,
             sheepCount = 42,
-            displayedSheepIcons = 4,
-            hasOverflowingFlock = false
+            displayedSheepIcons = 5,
+            overflowSheepCount = 0
         )
     )
 }

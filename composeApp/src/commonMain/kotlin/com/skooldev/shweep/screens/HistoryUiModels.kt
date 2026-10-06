@@ -15,7 +15,7 @@ internal data class HistorySessionUiModel(
     val durationMinutes: Int?,
     val sheepCount: Int,
     val displayedSheepIcons: Int,
-    val hasOverflowingFlock: Boolean
+    val overflowSheepCount: Int
 )
 
 internal data class HistorySummaryUiModel(
@@ -59,7 +59,7 @@ internal fun List<Session>.toHistoryUiModels(
             durationMinutes = durationMinutes,
             sheepCount = session.sheepCount,
             displayedSheepIcons = icons,
-            hasOverflowingFlock = session.sheepCount > 50
+            overflowSheepCount = flockOverflowCount(session.sheepCount)
         )
     }
 
@@ -114,11 +114,23 @@ internal fun formatSleepDuration(durationMillis: Long): String {
     }
 }
 
-internal fun flockIconCount(sheepCount: Int): Int = when {
-    sheepCount <= 0 -> 0
-    sheepCount <= 10 -> 1
-    sheepCount <= 20 -> 2
-    sheepCount <= 30 -> 3
-    sheepCount <= 40 -> 4
-    else -> 5
+/**
+ * One mini sheep represents [SHEEP_PER_ICON] sheep, so the flock reads as a
+ * real ratio rather than a set of arbitrary buckets. Capped at [MAX_FLOCK_ICONS]
+ * to fit the card; anything above the cap is reported by [flockOverflowCount].
+ */
+internal fun flockIconCount(sheepCount: Int): Int {
+    if (sheepCount <= 0) return 0
+    val full = (sheepCount + SHEEP_PER_ICON - 1) / SHEEP_PER_ICON
+    return full.coerceAtMost(MAX_FLOCK_ICONS)
 }
+
+/**
+ * Sheep beyond what the capped flock can represent, shown as a "+n" badge so a
+ * long session never silently looks the same as a short one.
+ */
+internal fun flockOverflowCount(sheepCount: Int): Int =
+    (sheepCount - MAX_FLOCK_ICONS * SHEEP_PER_ICON).coerceAtLeast(0)
+
+internal const val SHEEP_PER_ICON = 10
+internal const val MAX_FLOCK_ICONS = 5
