@@ -14,6 +14,7 @@ object Strings {
     // Counting Sheep Screen
     const val SWIPE_UP = "Swipe up"
     const val CD_COUNTING_BACKGROUND = "Night landscape background with mountains and moon"
+    const val COUNTING_CLOSE = "Close counting session"
     
     // History Dialog
     const val HISTORY_TITLE = "Session history"

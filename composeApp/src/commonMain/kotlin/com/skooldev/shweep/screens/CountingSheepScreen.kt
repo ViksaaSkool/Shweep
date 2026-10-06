@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -406,6 +407,7 @@ fun CountingSheepScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .systemBarsPadding()
                 .padding(Dimens.screenPadding)
         ) {
             Row(
@@ -413,14 +415,11 @@ fun CountingSheepScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                TextButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.padding(top = Dimens.spacingMedium)
-                ) {
-                    Text(
-                        text = Strings.HISTORY_CLOSE,
-                        fontSize = Dimens.fontSizeXLarge,
-                        color = AppColors.TextPrimary
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = Strings.COUNTING_CLOSE,
+                        tint = AppColors.TextPrimary
                     )
                 }
             }

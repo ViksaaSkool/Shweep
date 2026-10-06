@@ -39,3 +39,6 @@ firebase-adminsdk-*.json
 /tools/render_promo_frames.py
 /tools/render_promo_reels_frames.py
 /tools/render_promo_v2_frames.py
+/tools/render_promo_endcard_frames.py
+/tools/render_social_promo.py
+/art/social-promo.md
