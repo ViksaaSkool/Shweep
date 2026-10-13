@@ -44,3 +44,5 @@ firebase-adminsdk-*.json
 /art/social-promo.md
 /art/night-scroll-video.md
 /tools/render_night_scroll.py
+/art/social-scene-cards.md
+/tools/render_social_scene_cards.py
