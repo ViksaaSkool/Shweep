@@ -24,6 +24,7 @@ The current version of the app is part of the talk [for Droidcon Lisbon 26](http
 
 ![Droidcon](art/dclx_26.png)
 
+You can find the slides of the presentation [here](https://docs.google.com/presentation/d/10-qYL0wb5GWl2RjJ49YJTTPXZ9pEeBXx/edit?usp=sharing&ouid=110111187503324259833&rtpof=true&sd=true)
 
 # Documentation
 
