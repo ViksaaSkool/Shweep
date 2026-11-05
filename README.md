@@ -24,6 +24,10 @@ The current version of the app is part of the talk [for Droidcon Lisbon 26](http
 
 ![Droidcon](art/dclx_26.png)
 
+The app will also be part of the talk [for DevFest Linz 26](https://gdg.community.dev/events/details/google-gdg-linz-presents-devfest-linz-2026/) — *Ape, AI, and App Success: Why Simple Ideas Win in a Brave New Mobile World*.
+
+<img src="art/devfest_linz.png" alt="DevFest Linz" width="460"/>
+
 You can find the slides of the presentation [here](https://docs.google.com/presentation/d/10-qYL0wb5GWl2RjJ49YJTTPXZ9pEeBXx/edit?usp=sharing&ouid=110111187503324259833&rtpof=true&sd=true)
 
 # Documentation
@@ -109,7 +113,7 @@ composable. `commonTest` covers the policy and coordinator logic that is pure Ko
 # Download
 
 <a href="https://play.google.com/store/apps/details?id=com.skooldev.shweep"><img src="https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Google Play" draggable="false" style="pointer-events:none;user-select:none;"></a>
-<img src="https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white" alt="App Store" draggable="false" style="pointer-events:none;user-select:none;">
+<a href="https://apps.apple.com/us/app/shweep-swipe-sheep-to-sleep/id6818886043"><img src="https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white" alt="App Store" draggable="false" style="pointer-events:none;user-select:none;"></a>
 
 
 # License
