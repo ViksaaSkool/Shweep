@@ -140,7 +140,8 @@ fun App(
                     onRestore = { entitlementId -> purchaseManager.restore(entitlementId) },
                     onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
                     sheepArtwork = renderedColor.toArtwork(),
-                    coordinator = coordinator
+                    coordinator = coordinator,
+                    visibilityMonitor = visibilityMonitor
                 )
             }
             Screen.History -> {
@@ -216,17 +217,13 @@ fun App(
     }
 }
 
-private class NoOpVisibilityMonitor : AppVisibilityMonitor {
-    override val events = kotlinx.coroutines.flow.emptyFlow<AppVisibilityEvent>()
-}
-
 @Preview
 @Composable
 fun AppPreview() {
     MaterialTheme {
         App(
             purchaseGateway = MockStorePurchaseGateway(),
-            visibilityMonitor = NoOpVisibilityMonitor()
+            visibilityMonitor = NoOpVisibilityMonitor
         )
     }
 }

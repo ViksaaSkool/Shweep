@@ -124,20 +124,19 @@ body{
     text-decoration:none;
     transition:all .2s ease;
 }
-.store-btn--soon{
-    background:rgba(90,74,121,.50);
-    border:1px solid rgba(255,255,255,.10);
+.store-btn--play,
+.store-btn--app{
+    background:rgba(90,74,121,.75);
+    border:1px solid rgba(255,255,255,.18);
     color:var(--text);
-    cursor:default;
-    opacity:.6;
+}
+.store-btn--play:hover,
+.store-btn--app:hover{
+    background:rgba(123,107,158,.85);
+    border-color:rgba(255,255,255,.28);
 }
 .store-btn-icon{flex-shrink:0;opacity:.7}
 .store-btn span{display:flex;flex-direction:column;line-height:1.25;text-align:left}
-.store-btn small{
-    font-size:12px;
-    font-weight:400;
-    color:var(--text-muted);
-}
 
 /* Legal nav */
 .legal-nav{

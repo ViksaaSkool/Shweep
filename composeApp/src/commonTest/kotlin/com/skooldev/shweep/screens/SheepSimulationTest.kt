@@ -17,14 +17,16 @@ class SheepSimulationTest {
 
     private fun step(
         sheep: List<SheepItem>,
-        deltaSeconds: Float
+        deltaSeconds: Float,
+        frozenSheepId: Int? = null
     ): List<SheepItem> = SheepSimulation.step(
         sheepList = sheep,
         screenWidth = screenWidth,
         screenHeight = screenHeight,
         playAreaStartY = playAreaStartY,
         sheepBaseSizePx = baseSizePx,
-        deltaSeconds = deltaSeconds
+        deltaSeconds = deltaSeconds,
+        frozenSheepId = frozenSheepId
     )
 
     @Test
@@ -322,6 +324,42 @@ class SheepSimulationTest {
 
         assertEquals(1.3f, result[0].gaitPhaseRadians)
         assertEquals(4.1f, result[1].gaitPhaseRadians)
+    }
+
+    @Test
+    fun frozenSheepStaysPutAndDoesNotAgeWhileOthersMove() {
+        val frozen = SheepItem(
+            id = 0, x = 400f, y = 1000f, vx = 250f, vy = 50f,
+            gaitPhaseRadians = 1.1f, ageSeconds = 1.99f,
+            lifetimeSeconds = 2f, nextZigzagTurnIn = 0.01f, zigzagTurnInterval = 0.9f
+        )
+        val other = SheepItem(
+            id = 1, x = 700f, y = 1000f, vx = -250f, vy = 0f,
+            lifetimeSeconds = 999f, nextZigzagTurnIn = 999f, zigzagTurnInterval = 999f
+        )
+
+        val result = step(listOf(frozen, other), deltaSeconds = 0.05f, frozenSheepId = frozen.id)
+
+        assertEquals(frozen, result.first { it.id == frozen.id })
+        assertTrue(result.first { it.id == other.id }.x < other.x, "other sheep should keep moving")
+    }
+
+    @Test
+    fun frozenSheepIsNotMovedByCollisions() {
+        val frozen = SheepItem(
+            id = 0, x = 300f, y = 900f, vx = 200f, vy = 0f, lifetimeSeconds = 999f
+        )
+        val other = SheepItem(
+            id = 1, x = 380f, y = 900f, vx = -200f, vy = 0f, lifetimeSeconds = 999f
+        )
+
+        val result = step(listOf(frozen, other), deltaSeconds = 1f / 120f, frozenSheepId = frozen.id)
+
+        assertEquals(frozen, result.first { it.id == frozen.id })
+        assertTrue(
+            result.first { it.id == other.id }.x > other.x,
+            "colliding sheep should be pushed away from the frozen one"
+        )
     }
 
     @Test

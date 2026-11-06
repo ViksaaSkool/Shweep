@@ -94,16 +94,11 @@ fun OutOfSheepDialog(
                             .align(Alignment.Center)
                     )
 
-                    TextButton(
+                    AppCloseButton(
                         onClick = onDismiss,
+                        contentDescription = Strings.CD_CLOSE_OUT_OF_SHEEP,
                         modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Text(
-                            text = Strings.HISTORY_CLOSE,
-                            fontSize = Dimens.fontSizeXLarge,
-                            color = AppColors.TextPrimary
-                        )
-                    }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(Dimens.spacingXLarge))
