@@ -57,13 +57,10 @@ fun HistoryDialog(
                         color = AppColors.TextPrimary
                     )
 
-                    TextButton(onClick = onDismiss) {
-                        Text(
-                            text = Strings.HISTORY_CLOSE,
-                            fontSize = Dimens.fontSizeXLarge,
-                            color = AppColors.TextPrimary
-                        )
-                    }
+                    AppCloseButton(
+                        onClick = onDismiss,
+                        contentDescription = Strings.CD_CLOSE_HISTORY
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(Dimens.spacingXLarge))

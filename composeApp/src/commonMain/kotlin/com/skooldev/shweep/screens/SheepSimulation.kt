@@ -17,12 +17,21 @@ internal object SheepSimulation {
         screenHeight: Float,
         playAreaStartY: Float,
         sheepBaseSizePx: Float,
-        deltaSeconds: Float
+        deltaSeconds: Float,
+        frozenSheepId: Int? = null
     ): List<SheepItem> {
         val dt = deltaSeconds.coerceIn(0f, MAX_DELTA_SECONDS)
         val result = ArrayList<SheepItem>(sheepList.size)
+        var frozenSheep: SheepItem? = null
+        var frozenIndex = -1
 
         for (sheep in sheepList) {
+            if (frozenSheepId != null && sheep.id == frozenSheepId) {
+                frozenSheep = sheep
+                frozenIndex = result.size
+                result.add(sheep)
+                continue
+            }
             result.add(
                 when (sheep.motionState) {
                     SheepMotionState.ACTIVE -> stepActive(sheep, screenWidth, screenHeight, playAreaStartY, sheepBaseSizePx, dt)
@@ -32,6 +41,10 @@ internal object SheepSimulation {
         }
 
         resolveCollisions(result, sheepBaseSizePx, screenWidth, screenHeight, playAreaStartY)
+
+        // A held sheep ignores collisions as well, so it stays exactly where
+        // the player touched it until they lift their finger.
+        frozenSheep?.let { result[frozenIndex] = it }
 
         return result
     }

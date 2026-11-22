@@ -2,7 +2,8 @@ package com.skooldev.shweep.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -10,10 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
@@ -23,10 +26,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.tooling.preview.Preview
+import com.skooldev.shweep.AppVisibilityEvent
+import com.skooldev.shweep.AppVisibilityMonitor
 import com.skooldev.shweep.CountingSessionCoordinator
 import com.skooldev.shweep.MonotonicClock
+import com.skooldev.shweep.NoOpVisibilityMonitor
+import com.skooldev.shweep.audio.createMeadowMusicPlayer
+import com.skooldev.shweep.audio.createSheepBleatPlayer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import shweep.composeapp.generated.resources.Res
 import shweep.composeapp.generated.resources.background_counting
@@ -45,7 +54,6 @@ import com.skooldev.shweep.ui.theme.AppColors
 import com.skooldev.shweep.ui.theme.Strings
 import kotlin.math.floor
 import kotlin.random.Random
-import kotlin.time.ExperimentalTime
 
 private const val MIN_UPWARD_DISTANCE_DP = 48f
 private const val DRAG_ACTIVATION_DISTANCE_DP = 16f
@@ -57,7 +65,6 @@ private enum class SheepGestureMode {
     DRAGGING
 }
 
-@OptIn(ExperimentalTime::class)
 @Composable
 fun CountingSheepScreen(
     onBackClick: () -> Unit,
@@ -68,7 +75,9 @@ fun CountingSheepScreen(
     onRestore: (entitlementId: String) -> Unit,
     onClearRestoreErrors: () -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
-    coordinator: CountingSessionCoordinator
+    coordinator: CountingSessionCoordinator,
+    visibilityMonitor: AppVisibilityMonitor = NoOpVisibilityMonitor,
+    isActive: Boolean = true
 ) {
     val unlimitedSheepEntitlement =
         purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
@@ -84,12 +93,43 @@ fun CountingSheepScreen(
     val scope = rememberCoroutineScope()
 
     var draggedSheep by remember { mutableStateOf<SheepItem?>(null) }
-    var gestureMode by remember { mutableStateOf(SheepGestureMode.PENDING) }
-    var initialPointerY by remember { mutableFloatStateOf(0f) }
-    var initialEventTimeMillis by remember { mutableLongStateOf(0L) }
-    var totalDragY by remember { mutableFloatStateOf(0f) }
-    val velocityTracker = remember { VelocityTracker() }
+    var frozenSheepId by remember { mutableStateOf<Int?>(null) }
     var exhaustedUsage by remember { mutableStateOf<FreeSheepUsage?>(null) }
+
+    val bleatPlayer = remember { createSheepBleatPlayer() }
+    val musicPlayer = remember { createMeadowMusicPlayer() }
+    val isMusicPlaying by musicPlayer.isPlaying.collectAsState()
+    var isAppInForeground by remember { mutableStateOf(true) }
+    var isCheckingMusicAccess by remember { mutableStateOf(false) }
+    var musicAccessCheckJob by remember { mutableStateOf<Job?>(null) }
+    val currentIsActive by rememberUpdatedState(isActive)
+
+    val toggleMusic: () -> Unit = {
+        if (currentIsActive) {
+            if (isMusicPlaying) {
+                // Stopping the piano is always allowed, even at zero sheep.
+                musicPlayer.pause()
+            } else if (accessMode == SheepAccessMode.UNLIMITED) {
+                musicPlayer.play()
+            } else if (!isCheckingMusicAccess) {
+                isCheckingMusicAccess = true
+                musicAccessCheckJob = scope.launch {
+                    try {
+                        val usage = runCatching { freeSheepUsageRepository.refresh() }.getOrNull()
+                        when {
+                            usage == null -> Unit
+                            !currentIsActive -> Unit
+                            usage.isExhausted -> exhaustedUsage = usage
+                            isAppInForeground -> musicPlayer.play()
+                        }
+                    } finally {
+                        isCheckingMusicAccess = false
+                        musicAccessCheckJob = null
+                    }
+                }
+            }
+        }
+    }
 
     val grayness by coordinator.grayness.collectAsState()
 
@@ -113,6 +153,52 @@ fun CountingSheepScreen(
     // opposite convention, so invert here at the rendering boundary.
     val sceneColorMatrix = remember(grayness) {
         ColorMatrix().apply { setToSaturation(1f - grayness) }
+    }
+    val sceneColorFilter = remember(sceneColorMatrix) {
+        ColorFilter.colorMatrix(sceneColorMatrix)
+    }
+
+    LaunchedEffect(bleatPlayer) {
+        runCatching { Res.readBytes("files/mee_sheep.mp3") }
+            .onSuccess { bleatPlayer.prepare(it) }
+    }
+
+    LaunchedEffect(musicPlayer) {
+        runCatching { Res.readBytes("files/piano_sheep.mp3") }
+            .onSuccess { musicPlayer.prepare(it) }
+    }
+
+    DisposableEffect(bleatPlayer) {
+        onDispose { bleatPlayer.release() }
+    }
+
+    DisposableEffect(musicPlayer) {
+        onDispose { musicPlayer.release() }
+    }
+
+    LaunchedEffect(visibilityMonitor, bleatPlayer, musicPlayer) {
+        visibilityMonitor.events.collect { event ->
+            when (event) {
+                AppVisibilityEvent.Background -> {
+                    isAppInForeground = false
+                    bleatPlayer.stop()
+                    musicPlayer.pause()
+                }
+                AppVisibilityEvent.Foreground -> {
+                    isAppInForeground = true
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(isActive, bleatPlayer, musicPlayer) {
+        if (!isActive) {
+            musicAccessCheckJob?.cancel()
+            musicAccessCheckJob = null
+            isCheckingMusicAccess = false
+            bleatPlayer.stop()
+            musicPlayer.pause()
+        }
     }
 
     fun createSheep(
@@ -210,7 +296,8 @@ fun CountingSheepScreen(
                             screenHeight = screenHeight,
                             playAreaStartY = playAreaStartY,
                             sheepBaseSizePx = sheepBaseSizePx,
-                            deltaSeconds = physicsDeltaSeconds
+                            deltaSeconds = physicsDeltaSeconds,
+                            frozenSheepId = frozenSheepId
                         )
 
                         sheepList.value = stepped.filter { shouldKeepSheep(it, screenWidth, screenHeight, playAreaStartY, sheepBaseSizePx) }
@@ -227,89 +314,199 @@ fun CountingSheepScreen(
             .fillMaxSize()
             .onSizeChanged { size -> screenSize = size.toSize() }
             .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        gestureMode = SheepGestureMode.PENDING
-                        initialPointerY = offset.y
-                        initialEventTimeMillis = Clock.System.now().toEpochMilliseconds()
-                        totalDragY = 0f
-                        draggedSheep = null
-                        velocityTracker.resetTracking()
-                        velocityTracker.addPosition(
-                            timeMillis = Clock.System.now().toEpochMilliseconds(),
-                            position = offset
-                        )
-                        coordinator.onPointerActivity(MonotonicClock.nowMillis())
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        totalDragY += dragAmount.y
-                        velocityTracker.addPosition(
-                            timeMillis = change.uptimeMillis,
-                            position = change.position
-                        )
-                        coordinator.onPointerActivity(MonotonicClock.nowMillis())
+                awaitEachGesture {
+                    // Header buttons consume their own down events, so taps and
+                    // drags that start on the close or music controls never
+                    // reach the meadow.
+                    val down = awaitFirstDown(requireUnconsumed = true)
+                    val downPosition = down.position
+                    val downTimeMillis = down.uptimeMillis
 
-                        if (gestureMode == SheepGestureMode.PENDING) {
-                            val currentUpwardDistance = maxOf(0f, initialPointerY - change.position.y)
-                            val elapsedMillis = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
-                            val isUpward = totalDragY < 0f
+                    draggedSheep = null
+                    coordinator.onPointerActivity(MonotonicClock.nowMillis())
 
-                            if (isUpward && currentUpwardDistance >= dragActivationDistancePx) {
-                                val gestureDurationSeconds = (elapsedMillis.coerceAtLeast(1)) / 1000f
-                                val averageUpwardSpeed = currentUpwardDistance / gestureDurationSeconds
+                    val targetSheepId = findSheepIdAt(
+                        sheepList = sheepList.value,
+                        x = downPosition.x,
+                        y = downPosition.y,
+                        sheepBaseSizePx = sheepBaseSizePx
+                    )
 
-                                if (elapsedMillis >= DRAG_ACTIVATION_DURATION_MILLIS && averageUpwardSpeed < slowGestureThresholdPxPerSecond) {
-                                    gestureMode = SheepGestureMode.DRAGGING
-                                    val previewX = change.position.x - sheepBaseSizePx / 2f
-                                    val previewY = change.position.y - sheepBaseSizePx / 2f
-                                    draggedSheep = SheepItem(
-                                        id = sheepCount,
-                                        x = previewX.coerceIn(0f, screenSize.width - sheepBaseSizePx),
-                                        y = previewY.coerceIn(screenSize.height * 0.35f, screenSize.height - sheepBaseSizePx),
-                                        vx = 0f,
-                                        vy = 0f,
+                    var pendingLongPress = targetSheepId != null
+                    var bleatTriggered = false
+                    var dragStarted = false
+                    var dragStartedAtMillis = downTimeMillis
+                    var upTimeMillis = downTimeMillis
+                    var lastEventTimeMillis = downTimeMillis
+                    var totalDragY = 0f
+                    var gestureMode = SheepGestureMode.PENDING
+                    var endedWithUp = false
+                    val velocityTracker = VelocityTracker()
+                    velocityTracker.addPosition(downTimeMillis, downPosition)
+
+                    try {
+                        while (true) {
+                            val remainingLongPressMillis =
+                                viewConfiguration.longPressTimeoutMillis -
+                                    (lastEventTimeMillis - downTimeMillis)
+
+                            val event = if (pendingLongPress) {
+                                withTimeoutOrNull(remainingLongPressMillis.coerceAtLeast(0L)) {
+                                    awaitPointerEvent()
+                                }
+                            } else {
+                                awaitPointerEvent()
+                            }
+
+                            if (event == null) {
+                                val targetStillPresent = targetSheepId != null &&
+                                    sheepList.value.any { it.id == targetSheepId }
+
+                                if (pendingLongPress && targetStillPresent && isAppInForeground) {
+                                    bleatPlayer.play()
+                                    bleatTriggered = true
+                                    frozenSheepId = targetSheepId
+                                }
+                                pendingLongPress = false
+                                continue
+                            }
+
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            lastEventTimeMillis = change.uptimeMillis
+
+                            if (event.changes.count { it.pressed } > 1) {
+                                pendingLongPress = false
+                            }
+
+                            val distanceFromDown = (change.position - downPosition).getDistance()
+
+                            if (bleatTriggered) {
+                                change.consume()
+                                if (change.changedToUpIgnoreConsumed()) {
+                                    upTimeMillis = change.uptimeMillis
+                                    endedWithUp = true
+                                    break
+                                }
+                                continue
+                            }
+
+                            if (
+                                isSheepLongPressTriggered(
+                                    hasTarget = targetSheepId != null,
+                                    distancePx = distanceFromDown,
+                                    touchSlopPx = viewConfiguration.touchSlop,
+                                    elapsedMillis = change.uptimeMillis - downTimeMillis,
+                                    timeoutMillis = viewConfiguration.longPressTimeoutMillis
+                                )
+                            ) {
+                                val targetStillPresent = targetSheepId != null &&
+                                    sheepList.value.any { it.id == targetSheepId }
+
+                                if (targetStillPresent && isAppInForeground) {
+                                    bleatPlayer.play()
+                                    bleatTriggered = true
+                                    frozenSheepId = targetSheepId
+                                    pendingLongPress = false
+                                    change.consume()
+                                    if (change.changedToUpIgnoreConsumed()) {
+                                        upTimeMillis = change.uptimeMillis
+                                        endedWithUp = true
+                                        break
+                                    }
+                                    continue
+                                }
+                                pendingLongPress = false
+                            }
+
+                            if (pendingLongPress && distanceFromDown > viewConfiguration.touchSlop) {
+                                pendingLongPress = false
+                            }
+
+                            if (!dragStarted && distanceFromDown > viewConfiguration.touchSlop) {
+                                dragStarted = true
+                                dragStartedAtMillis = change.uptimeMillis
+                                totalDragY = change.position.y - downPosition.y
+                                velocityTracker.resetTracking()
+                                velocityTracker.addPosition(change.uptimeMillis, change.position)
+                            } else if (dragStarted) {
+                                totalDragY = change.position.y - downPosition.y
+                                velocityTracker.addPosition(change.uptimeMillis, change.position)
+                            }
+
+                            if (dragStarted) {
+                                change.consume()
+                                coordinator.onPointerActivity(MonotonicClock.nowMillis())
+
+                                val currentUpwardDistance =
+                                    maxOf(0f, downPosition.y - change.position.y)
+
+                                if (gestureMode == SheepGestureMode.PENDING) {
+                                    val elapsedMillis = change.uptimeMillis - dragStartedAtMillis
+                                    if (totalDragY < 0f && currentUpwardDistance >= dragActivationDistancePx) {
+                                        val gestureDurationSeconds =
+                                            elapsedMillis.coerceAtLeast(1) / 1000f
+                                        val averageUpwardSpeed =
+                                            currentUpwardDistance / gestureDurationSeconds
+
+                                        if (
+                                            elapsedMillis >= DRAG_ACTIVATION_DURATION_MILLIS &&
+                                            averageUpwardSpeed < slowGestureThresholdPxPerSecond
+                                        ) {
+                                            gestureMode = SheepGestureMode.DRAGGING
+                                        }
+                                    }
+                                }
+
+                                if (gestureMode == SheepGestureMode.DRAGGING) {
+                                    draggedSheep = createDraggedSheepPreview(
+                                        position = change.position,
+                                        screenWidth = screenSize.width,
+                                        screenHeight = screenSize.height,
+                                        sheepBaseSizePx = sheepBaseSizePx,
                                         artwork = sheepArtwork,
-                                        motionState = SheepMotionState.ACTIVE
+                                        id = sheepCount
                                     )
                                 }
                             }
-                        }
 
-                        if (gestureMode == SheepGestureMode.DRAGGING) {
-                            val screenWidth = screenSize.width
-                            val screenHeight = screenSize.height
-                            if (screenWidth > 0 && screenHeight > 0) {
-                                val previewX = change.position.x - sheepBaseSizePx / 2f
-                                val previewY = change.position.y - sheepBaseSizePx / 2f
-                                val playAreaStartY = screenHeight * 0.35f
-                                draggedSheep = SheepItem(
-                                    id = sheepCount,
-                                    x = previewX.coerceIn(0f, screenWidth - sheepBaseSizePx),
-                                    y = previewY.coerceIn(playAreaStartY, screenHeight - sheepBaseSizePx),
-                                    vx = 0f,
-                                    vy = 0f,
-                                    artwork = sheepArtwork,
-                                    motionState = SheepMotionState.ACTIVE
-                                )
+                            if (change.changedToUpIgnoreConsumed()) {
+                                upTimeMillis = change.uptimeMillis
+                                endedWithUp = true
+                                break
                             }
                         }
-                    },
-                    onDragEnd = {
+                    } finally {
+                        if (!endedWithUp) {
+                            draggedSheep = null
+                            gestureMode = SheepGestureMode.PENDING
+                        }
+                        frozenSheepId = null
+                    }
+
+                    if (endedWithUp && !bleatTriggered && dragStarted) {
                         val screenWidth = screenSize.width
                         val screenHeight = screenSize.height
                         val playAreaStartY = screenHeight * 0.35f
                         val playAreaHeight = screenHeight - playAreaStartY
                         val now = MonotonicClock.nowMillis()
+                        val elapsed = upTimeMillis - dragStartedAtMillis
 
                         if (screenWidth > 0 && playAreaHeight > 0) {
-                            if (gestureMode == SheepGestureMode.DRAGGING && draggedSheep != null) {
-                                val dropX = draggedSheep!!.x.coerceIn(0f, screenWidth - sheepBaseSizePx)
-                                val dropY = draggedSheep!!.y.coerceIn(playAreaStartY, screenHeight - sheepBaseSizePx)
-
-                                val elapsed = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
+                            val currentDraggedSheep = draggedSheep
+                            if (gestureMode == SheepGestureMode.DRAGGING &&
+                                currentDraggedSheep != null
+                            ) {
+                                val dropX = currentDraggedSheep.x.coerceIn(
+                                    0f,
+                                    maxOf(0f, screenWidth - sheepBaseSizePx)
+                                )
+                                val dropY = currentDraggedSheep.y.coerceIn(
+                                    playAreaStartY,
+                                    maxOf(playAreaStartY, screenHeight - sheepBaseSizePx)
+                                )
                                 val distance = maxOf(0f, -totalDragY)
-                                val speed = if (elapsed > 0) distance / (elapsed / 1000f) else 0f
+                                val speed =
+                                    if (elapsed > 0) distance / (elapsed / 1000f) else 0f
 
                                 val sample = GestureSample(
                                     mode = GestureMode.DRAG,
@@ -320,15 +517,25 @@ fun CountingSheepScreen(
                                     cancelled = false
                                 )
 
-                                createSheep(sample, dropX, dropY, screenWidth, sheepBaseSizePx, now)
+                                createSheep(
+                                    sample,
+                                    dropX,
+                                    dropY,
+                                    screenWidth,
+                                    sheepBaseSizePx,
+                                    now
+                                )
                             } else {
                                 val isUpwardSwipe = totalDragY < -minUpwardDistancePx
                                 if (isUpwardSwipe) {
                                     val velocity = velocityTracker.calculateVelocity()
                                     val releaseUpwardSpeed = -velocity.y
-                                    val elapsed = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
-                                    val averageUpwardSpeed = maxOf(0f, -totalDragY / maxOf(0.001f, elapsed / 1000f))
-                                    val effectiveUpwardSpeed = maxOf(averageUpwardSpeed, releaseUpwardSpeed)
+                                    val averageUpwardSpeed = maxOf(
+                                        0f,
+                                        -totalDragY / maxOf(0.001f, elapsed / 1000f)
+                                    )
+                                    val effectiveUpwardSpeed =
+                                        maxOf(averageUpwardSpeed, releaseUpwardSpeed)
 
                                     if (effectiveUpwardSpeed >= slowGestureThresholdPxPerSecond) {
                                         val distanceDp = -totalDragY / densityScale
@@ -343,16 +550,26 @@ fun CountingSheepScreen(
                                             cancelled = false
                                         )
 
-                                        val newX = Random.nextFloat() * maxOf(0f, screenWidth - sheepBaseSizePx)
-                                        val newY = playAreaStartY + Random.nextFloat() * maxOf(0f, playAreaHeight - sheepBaseSizePx)
-                                        createSheep(sample, newX, newY, screenWidth, sheepBaseSizePx, now)
+                                        val newX = Random.nextFloat() *
+                                            maxOf(0f, screenWidth - sheepBaseSizePx)
+                                        val newY = playAreaStartY + Random.nextFloat() *
+                                            maxOf(0f, playAreaHeight - sheepBaseSizePx)
+                                        createSheep(
+                                            sample,
+                                            newX,
+                                            newY,
+                                            screenWidth,
+                                            sheepBaseSizePx,
+                                            now
+                                        )
                                     } else {
                                         coordinator.recordAttempt(
                                             GestureSample(
                                                 mode = GestureMode.FLICK,
                                                 durationMillis = elapsed,
                                                 upwardDistanceDp = -totalDragY / densityScale,
-                                                effectiveSpeedDpPerSecond = effectiveUpwardSpeed / densityScale,
+                                                effectiveSpeedDpPerSecond =
+                                                    effectiveUpwardSpeed / densityScale,
                                                 completed = false,
                                                 cancelled = false
                                             ),
@@ -362,26 +579,11 @@ fun CountingSheepScreen(
                                 }
                             }
                         }
-                        draggedSheep = null
-                        gestureMode = SheepGestureMode.PENDING
-                    },
-                    onDragCancel = {
-                        val elapsed = Clock.System.now().toEpochMilliseconds() - initialEventTimeMillis
-                        coordinator.recordAttempt(
-                            GestureSample(
-                                mode = GestureMode.DRAG,
-                                durationMillis = elapsed,
-                                upwardDistanceDp = 0f,
-                                effectiveSpeedDpPerSecond = 0f,
-                                completed = false,
-                                cancelled = true
-                            ),
-                            MonotonicClock.nowMillis()
-                        )
-                        draggedSheep = null
-                        gestureMode = SheepGestureMode.PENDING
                     }
-                )
+
+                    draggedSheep = null
+                    gestureMode = SheepGestureMode.PENDING
+                }
             }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -390,7 +592,7 @@ fun CountingSheepScreen(
                 contentDescription = Strings.CD_COUNTING_BACKGROUND,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                colorFilter = ColorFilter.colorMatrix(sceneColorMatrix)
+                colorFilter = sceneColorFilter
             )
 
             LayeredSheepCanvas(
@@ -399,7 +601,7 @@ fun CountingSheepScreen(
                 sheepBaseSizePx = sheepBaseSizePx,
                 frameCounter = frameCounter,
                 modifier = Modifier.fillMaxSize(),
-                colorFilter = ColorFilter.colorMatrix(sceneColorMatrix)
+                colorFilter = sceneColorFilter
             )
         }
 
@@ -409,20 +611,25 @@ fun CountingSheepScreen(
                 .padding(Dimens.screenPadding)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .systemBarsPadding(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                TextButton(
+                AppCloseButton(
                     onClick = onBackClick,
-                    modifier = Modifier.padding(top = Dimens.spacingMedium)
-                ) {
-                    Text(
-                        text = Strings.HISTORY_CLOSE,
-                        fontSize = Dimens.fontSizeXLarge,
-                        color = AppColors.TextPrimary
-                    )
-                }
+                    contentDescription = Strings.CD_CLOSE_COUNTING,
+                    modifier = Modifier.padding(top = Dimens.spacingSmall),
+                    colorFilter = sceneColorFilter
+                )
+
+                MeadowMusicButton(
+                    isPlaying = isMusicPlaying,
+                    onClick = toggleMusic,
+                    modifier = Modifier.padding(top = Dimens.spacingSmall),
+                    colorFilter = sceneColorFilter
+                )
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -444,26 +651,28 @@ fun CountingSheepScreen(
     LaunchedEffect(accessMode) {
         if (accessMode != SheepAccessMode.UNLIMITED) {
             val usage = freeSheepUsageRepository.refresh()
-            if (usage.isExhausted) {
+            if (currentIsActive && usage.isExhausted) {
                 exhaustedUsage = usage
             }
         }
     }
 
-    exhaustedUsage?.let { usage ->
-        if (accessMode != SheepAccessMode.UNLIMITED) {
-            OutOfSheepDialog(
-                cooldownEndsAtEpochMillis = usage.cooldownEndsAtEpochMillis,
-                purchaseState = purchaseState,
-                onPurchase = onPurchase,
-                onRestore = onRestore,
-                onDismiss = { exhaustedUsage = null },
-                onResetReached = {
-                    exhaustedUsage = null
-                    scope.launch { freeSheepUsageRepository.refresh() }
-                },
-                onClearRestoreErrors = onClearRestoreErrors
-            )
+    if (isActive) {
+        exhaustedUsage?.let { usage ->
+            if (accessMode != SheepAccessMode.UNLIMITED) {
+                OutOfSheepDialog(
+                    cooldownEndsAtEpochMillis = usage.cooldownEndsAtEpochMillis,
+                    purchaseState = purchaseState,
+                    onPurchase = onPurchase,
+                    onRestore = onRestore,
+                    onDismiss = { exhaustedUsage = null },
+                    onResetReached = {
+                        exhaustedUsage = null
+                        scope.launch { freeSheepUsageRepository.refresh() }
+                    },
+                    onClearRestoreErrors = onClearRestoreErrors
+                )
+            }
         }
     }
 }
@@ -540,7 +749,6 @@ private fun SwipeUpIndicator() {
     }
 }
 
-@OptIn(ExperimentalTime::class)
 @Preview
 @Composable
 fun CountingSheepScreenPreview() {
@@ -583,4 +791,32 @@ internal fun shouldKeepSheep(
     val isBeyondTop = sheep.y + sheepBaseSizePx <= playAreaStartY
     val isBeyondBottom = sheep.y >= screenHeight
     return !(isBeyondLeft || isBeyondRight || isBeyondTop || isBeyondBottom)
+}
+
+private fun createDraggedSheepPreview(
+    position: Offset,
+    screenWidth: Float,
+    screenHeight: Float,
+    sheepBaseSizePx: Float,
+    artwork: SheepArtwork,
+    id: Int
+): SheepItem? {
+    if (screenWidth <= 0f || screenHeight <= 0f) return null
+
+    val playAreaStartY = screenHeight * 0.35f
+    return SheepItem(
+        id = id,
+        x = (position.x - sheepBaseSizePx / 2f).coerceIn(
+            0f,
+            maxOf(0f, screenWidth - sheepBaseSizePx)
+        ),
+        y = (position.y - sheepBaseSizePx / 2f).coerceIn(
+            playAreaStartY,
+            maxOf(playAreaStartY, screenHeight - sheepBaseSizePx)
+        ),
+        vx = 0f,
+        vy = 0f,
+        artwork = artwork,
+        motionState = SheepMotionState.ACTIVE
+    )
 }

@@ -14,10 +14,16 @@ object Strings {
     // Counting Sheep Screen
     const val SWIPE_UP = "Swipe up"
     const val CD_COUNTING_BACKGROUND = "Night landscape background with mountains and moon"
+    const val CD_CLOSE_COUNTING = "Close counting meadow"
+    const val CD_CLOSE_HISTORY = "Close session history"
+    const val CD_CLOSE_OUT_OF_SHEEP = "Close no sheep left dialog"
+    const val CD_PLAY_PIANO_MUSIC = "Play piano music"
+    const val CD_PAUSE_PIANO_MUSIC = "Pause piano music"
+    const val PIANO_MUSIC_PLAYING = "Playing"
+    const val PIANO_MUSIC_PAUSED = "Paused"
     
     // History Dialog
     const val HISTORY_TITLE = "Session history"
-    const val HISTORY_CLOSE = "✕"
     const val SHEEP_COUNT_FORMAT = "No of sheep: %d"
     
     // Content Descriptions
