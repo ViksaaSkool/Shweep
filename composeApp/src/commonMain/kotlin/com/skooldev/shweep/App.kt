@@ -1,10 +1,20 @@
 package com.skooldev.shweep
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import com.skooldev.shweep.data.DataStoreFreeSheepUsageRepository
 import com.skooldev.shweep.data.SessionEndReason
@@ -25,7 +35,10 @@ import com.skooldev.shweep.screens.SheepColorDialog
 import com.skooldev.shweep.screens.StartScreen
 import com.skooldev.shweep.screens.UpdateNoticeDialog
 import com.skooldev.shweep.ui.theme.Strings
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private val ScreenBackdrop = Color(0xFF1B1934)
 
 enum class Screen {
     Start,
@@ -43,6 +56,22 @@ fun App(
 ) {
     MaterialTheme {
         var currentScreen by remember { mutableStateOf(Screen.Start) }
+        var animateNextScreenChange by remember { mutableStateOf(true) }
+        var isTransitioning by remember { mutableStateOf(false) }
+
+        fun navigateTo(target: Screen, animate: Boolean = true) {
+            if (currentScreen == target) return
+            animateNextScreenChange = animate
+            isTransitioning = animate
+            currentScreen = target
+        }
+
+        LaunchedEffect(currentScreen) {
+            if (isTransitioning) {
+                delay(SCREEN_TRANSITION_WINDOW_MILLIS)
+                isTransitioning = false
+            }
+        }
 
         val dataStore = remember { createDataStore() }
         val sessionRepository = remember(dataStore) { SessionRepositoryImpl(dataStore) }
@@ -88,7 +117,7 @@ fun App(
                         if (currentScreen == Screen.Counting) {
                             when (coordinator.onForeground()) {
                                 CountingSessionCoordinator.ForegroundResult.SessionEnded -> {
-                                    currentScreen = Screen.Start
+                                    navigateTo(Screen.Start, animate = false)
                                 }
                                 CountingSessionCoordinator.ForegroundResult.Resumed -> {
                                     // Session continues
@@ -115,76 +144,140 @@ fun App(
         )
         val showUpdateNotice = shouldShowUpdateNotice(seenUpdateNoticeVersion)
 
-        when (currentScreen) {
-            Screen.Start -> {
-                StartScreen(
-                    onGoToSleepClick = {
-                        coordinator.startSession()
-                        currentScreen = Screen.Counting
-                    },
-                    onHistoryClick = { currentScreen = Screen.History },
-                    onSettingsClick = { currentScreen = Screen.Settings },
-                    sheepColor = renderedColor
-                )
-            }
-            Screen.Counting -> {
-                CountingSheepScreen(
-                    onBackClick = {
-                        coordinator.endSession(SessionEndReason.USER_EXIT)
-                        currentScreen = Screen.Start
-                    },
-                    sessionRepository = sessionRepository,
-                    freeSheepUsageRepository = freeSheepUsageRepository,
-                    purchaseState = purchaseState,
-                    onPurchase = { purchaseManager.purchase(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT) },
-                    onRestore = { entitlementId -> purchaseManager.restore(entitlementId) },
-                    onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
-                    sheepArtwork = renderedColor.toArtwork(),
-                    coordinator = coordinator,
-                    visibilityMonitor = visibilityMonitor
-                )
-            }
-            Screen.History -> {
-                HistoryScreen(
-                    sessionRepository = sessionRepository,
-                    onBack = { currentScreen = Screen.Start }
-                )
-            }
-            Screen.Settings -> {
-                SettingsScreen(
-                    selectedColor = selectedColor,
-                    hasColorfulSheep = purchaseState.hasColorfulSheep,
-                    onSaveColor = { color ->
-                        scope.launch { settingsRepository.setSheepColor(color) }
-                        currentScreen = Screen.Start
-                    },
-                    onPrivacyPolicyClick = {
-                        uriHandler.openUri(AppLinks.PRIVACY_POLICY)
-                    },
-                    onTermsOfServiceClick = {
-                        uriHandler.openUri(AppLinks.TERMS_OF_SERVICE)
-                    },
-                    onContactSupportClick = {
-                        uriHandler.openUri(AppLinks.CONTACT_SUPPORT)
-                    },
-                    onInviteFriendsClick = {
-                        shareText(text = AppLinks.inviteMessage, title = Strings.SHARE_SHWEEP)
-                    },
-                    onPurchase = { productId -> purchaseManager.purchase(productId) },
-                    onRestorePurchases = { entitlementId -> purchaseManager.restore(entitlementId) },
-                    onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
-                    versionLabel = versionLabel,
-                    purchaseState = purchaseState,
-                    onBack = { currentScreen = Screen.Start }
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(ScreenBackdrop)
+        ) {
+            AnimatedContent(
+                targetState = currentScreen,
+                transitionSpec = {
+                    if (animateNextScreenChange) {
+                        screenContentTransform(
+                            initial = initialState,
+                            target = targetState,
+                            style = platform.screenTransitionStyle,
+                            reduceMotion = platform.prefersReducedMotion
+                        )
+                    } else {
+                        instantScreenContentTransform()
+                    }
+                },
+                label = "screen_transition",
+                modifier = Modifier.fillMaxSize()
+            ) { screen ->
+                val isActive = screen == currentScreen
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .semantics { if (!isActive) invisibleToUser() }
+                ) {
+                    when (screen) {
+                        Screen.Start -> {
+                            StartScreen(
+                                onGoToSleepClick = {
+                                    if (currentScreen == Screen.Start) {
+                                        coordinator.startSession()
+                                        navigateTo(Screen.Counting)
+                                    }
+                                },
+                                onHistoryClick = { navigateTo(Screen.History) },
+                                onSettingsClick = { navigateTo(Screen.Settings) },
+                                sheepColor = renderedColor
+                            )
+                        }
+                        Screen.Counting -> {
+                            CountingSheepScreen(
+                                onBackClick = {
+                                    coordinator.endSession(SessionEndReason.USER_EXIT)
+                                    navigateTo(Screen.Start)
+                                },
+                                sessionRepository = sessionRepository,
+                                freeSheepUsageRepository = freeSheepUsageRepository,
+                                purchaseState = purchaseState,
+                                onPurchase = {
+                                    purchaseManager.purchase(PurchaseCatalog.UNLIMITED_SHEEP_PRODUCT)
+                                },
+                                onRestore = { entitlementId ->
+                                    purchaseManager.restore(entitlementId)
+                                },
+                                onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
+                                sheepArtwork = renderedColor.toArtwork(),
+                                coordinator = coordinator,
+                                visibilityMonitor = visibilityMonitor,
+                                isActive = isActive
+                            )
+                        }
+                        Screen.History -> {
+                            HistoryScreen(
+                                sessionRepository = sessionRepository,
+                                onBack = { navigateTo(Screen.Start) }
+                            )
+                        }
+                        Screen.Settings -> {
+                            SettingsScreen(
+                                selectedColor = selectedColor,
+                                hasColorfulSheep = purchaseState.hasColorfulSheep,
+                                onSaveColor = { color ->
+                                    scope.launch { settingsRepository.setSheepColor(color) }
+                                    navigateTo(Screen.Start)
+                                },
+                                onPrivacyPolicyClick = {
+                                    uriHandler.openUri(AppLinks.PRIVACY_POLICY)
+                                },
+                                onTermsOfServiceClick = {
+                                    uriHandler.openUri(AppLinks.TERMS_OF_SERVICE)
+                                },
+                                onContactSupportClick = {
+                                    uriHandler.openUri(AppLinks.CONTACT_SUPPORT)
+                                },
+                                onInviteFriendsClick = {
+                                    shareText(
+                                        text = AppLinks.inviteMessage,
+                                        title = Strings.SHARE_SHWEEP
+                                    )
+                                },
+                                onPurchase = { productId -> purchaseManager.purchase(productId) },
+                                onRestorePurchases = { entitlementId ->
+                                    purchaseManager.restore(entitlementId)
+                                },
+                                onClearRestoreErrors = { purchaseManager.clearRestoreErrors() },
+                                versionLabel = versionLabel,
+                                purchaseState = purchaseState,
+                                onBack = { navigateTo(Screen.Start) }
+                            )
+                        }
+                    }
+
+                    if (!isActive) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .pointerInput(Unit) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            awaitPointerEvent(PointerEventPass.Initial)
+                                                .changes
+                                                .forEach { it.consume() }
+                                        }
+                                    }
+                                }
+                        )
+                    }
+                }
             }
         }
 
-        BackHandler(enabled = currentScreen == Screen.Settings || currentScreen == Screen.Counting || currentScreen == Screen.History) {
+        BackHandler(
+            enabled = currentScreen != Screen.Start || isTransitioning
+        ) {
             if (currentScreen == Screen.Counting) {
                 coordinator.endSession(SessionEndReason.USER_EXIT)
             }
-            currentScreen = Screen.Start
+            if (currentScreen != Screen.Start) {
+                navigateTo(Screen.Start)
+            }
         }
 
         if (!hasChosenSheepColor) {

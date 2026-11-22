@@ -33,6 +33,7 @@ import com.skooldev.shweep.MonotonicClock
 import com.skooldev.shweep.NoOpVisibilityMonitor
 import com.skooldev.shweep.audio.createMeadowMusicPlayer
 import com.skooldev.shweep.audio.createSheepBleatPlayer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
@@ -75,7 +76,8 @@ fun CountingSheepScreen(
     onClearRestoreErrors: () -> Unit,
     sheepArtwork: SheepArtwork = SheepArtwork.WHITE,
     coordinator: CountingSessionCoordinator,
-    visibilityMonitor: AppVisibilityMonitor = NoOpVisibilityMonitor
+    visibilityMonitor: AppVisibilityMonitor = NoOpVisibilityMonitor,
+    isActive: Boolean = true
 ) {
     val unlimitedSheepEntitlement =
         purchaseState.entitlementState(PurchaseCatalog.UNLIMITED_SHEEP_ENTITLEMENT)
@@ -99,25 +101,31 @@ fun CountingSheepScreen(
     val isMusicPlaying by musicPlayer.isPlaying.collectAsState()
     var isAppInForeground by remember { mutableStateOf(true) }
     var isCheckingMusicAccess by remember { mutableStateOf(false) }
+    var musicAccessCheckJob by remember { mutableStateOf<Job?>(null) }
+    val currentIsActive by rememberUpdatedState(isActive)
 
-    val toggleMusic = {
-        if (isMusicPlaying) {
-            // Stopping the piano is always allowed, even at zero sheep.
-            musicPlayer.pause()
-        } else if (accessMode == SheepAccessMode.UNLIMITED) {
-            musicPlayer.play()
-        } else if (!isCheckingMusicAccess) {
-            isCheckingMusicAccess = true
-            scope.launch {
-                try {
-                    val usage = runCatching { freeSheepUsageRepository.refresh() }.getOrNull()
-                    when {
-                        usage == null -> Unit
-                        usage.isExhausted -> exhaustedUsage = usage
-                        isAppInForeground -> musicPlayer.play()
+    val toggleMusic: () -> Unit = {
+        if (currentIsActive) {
+            if (isMusicPlaying) {
+                // Stopping the piano is always allowed, even at zero sheep.
+                musicPlayer.pause()
+            } else if (accessMode == SheepAccessMode.UNLIMITED) {
+                musicPlayer.play()
+            } else if (!isCheckingMusicAccess) {
+                isCheckingMusicAccess = true
+                musicAccessCheckJob = scope.launch {
+                    try {
+                        val usage = runCatching { freeSheepUsageRepository.refresh() }.getOrNull()
+                        when {
+                            usage == null -> Unit
+                            !currentIsActive -> Unit
+                            usage.isExhausted -> exhaustedUsage = usage
+                            isAppInForeground -> musicPlayer.play()
+                        }
+                    } finally {
+                        isCheckingMusicAccess = false
+                        musicAccessCheckJob = null
                     }
-                } finally {
-                    isCheckingMusicAccess = false
                 }
             }
         }
@@ -145,6 +153,9 @@ fun CountingSheepScreen(
     // opposite convention, so invert here at the rendering boundary.
     val sceneColorMatrix = remember(grayness) {
         ColorMatrix().apply { setToSaturation(1f - grayness) }
+    }
+    val sceneColorFilter = remember(sceneColorMatrix) {
+        ColorFilter.colorMatrix(sceneColorMatrix)
     }
 
     LaunchedEffect(bleatPlayer) {
@@ -177,6 +188,16 @@ fun CountingSheepScreen(
                     isAppInForeground = true
                 }
             }
+        }
+    }
+
+    LaunchedEffect(isActive, bleatPlayer, musicPlayer) {
+        if (!isActive) {
+            musicAccessCheckJob?.cancel()
+            musicAccessCheckJob = null
+            isCheckingMusicAccess = false
+            bleatPlayer.stop()
+            musicPlayer.pause()
         }
     }
 
@@ -571,7 +592,7 @@ fun CountingSheepScreen(
                 contentDescription = Strings.CD_COUNTING_BACKGROUND,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                colorFilter = ColorFilter.colorMatrix(sceneColorMatrix)
+                colorFilter = sceneColorFilter
             )
 
             LayeredSheepCanvas(
@@ -580,7 +601,7 @@ fun CountingSheepScreen(
                 sheepBaseSizePx = sheepBaseSizePx,
                 frameCounter = frameCounter,
                 modifier = Modifier.fillMaxSize(),
-                colorFilter = ColorFilter.colorMatrix(sceneColorMatrix)
+                colorFilter = sceneColorFilter
             )
         }
 
@@ -599,13 +620,15 @@ fun CountingSheepScreen(
                 AppCloseButton(
                     onClick = onBackClick,
                     contentDescription = Strings.CD_CLOSE_COUNTING,
-                    modifier = Modifier.padding(top = Dimens.spacingSmall)
+                    modifier = Modifier.padding(top = Dimens.spacingSmall),
+                    colorFilter = sceneColorFilter
                 )
 
                 MeadowMusicButton(
                     isPlaying = isMusicPlaying,
                     onClick = toggleMusic,
-                    modifier = Modifier.padding(top = Dimens.spacingSmall)
+                    modifier = Modifier.padding(top = Dimens.spacingSmall),
+                    colorFilter = sceneColorFilter
                 )
             }
 
@@ -628,26 +651,28 @@ fun CountingSheepScreen(
     LaunchedEffect(accessMode) {
         if (accessMode != SheepAccessMode.UNLIMITED) {
             val usage = freeSheepUsageRepository.refresh()
-            if (usage.isExhausted) {
+            if (currentIsActive && usage.isExhausted) {
                 exhaustedUsage = usage
             }
         }
     }
 
-    exhaustedUsage?.let { usage ->
-        if (accessMode != SheepAccessMode.UNLIMITED) {
-            OutOfSheepDialog(
-                cooldownEndsAtEpochMillis = usage.cooldownEndsAtEpochMillis,
-                purchaseState = purchaseState,
-                onPurchase = onPurchase,
-                onRestore = onRestore,
-                onDismiss = { exhaustedUsage = null },
-                onResetReached = {
-                    exhaustedUsage = null
-                    scope.launch { freeSheepUsageRepository.refresh() }
-                },
-                onClearRestoreErrors = onClearRestoreErrors
-            )
+    if (isActive) {
+        exhaustedUsage?.let { usage ->
+            if (accessMode != SheepAccessMode.UNLIMITED) {
+                OutOfSheepDialog(
+                    cooldownEndsAtEpochMillis = usage.cooldownEndsAtEpochMillis,
+                    purchaseState = purchaseState,
+                    onPurchase = onPurchase,
+                    onRestore = onRestore,
+                    onDismiss = { exhaustedUsage = null },
+                    onResetReached = {
+                        exhaustedUsage = null
+                        scope.launch { freeSheepUsageRepository.refresh() }
+                    },
+                    onClearRestoreErrors = onClearRestoreErrors
+                )
+            }
         }
     }
 }

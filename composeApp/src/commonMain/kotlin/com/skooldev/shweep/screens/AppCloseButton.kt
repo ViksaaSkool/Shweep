@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.semantics.contentDescription
@@ -30,7 +31,8 @@ import com.skooldev.shweep.ui.theme.Dimens
 internal fun AppCloseButton(
     onClick: () -> Unit,
     contentDescription: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    colorFilter: ColorFilter? = null
 ) {
     IconButton(
         onClick = onClick,
@@ -40,13 +42,13 @@ internal fun AppCloseButton(
             .semantics { this.contentDescription = contentDescription }
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            drawMeadowButtonBackground()
-            drawCloseGlyph()
+            drawMeadowButtonBackground(colorFilter)
+            drawCloseGlyph(colorFilter)
         }
     }
 }
 
-private fun DrawScope.drawCloseGlyph() {
+private fun DrawScope.drawCloseGlyph(colorFilter: ColorFilter?) {
     val w = size.width
     val h = size.height
     val margin = 0.34f
@@ -56,14 +58,16 @@ private fun DrawScope.drawCloseGlyph() {
         start = Offset(w * margin, h * margin),
         end = Offset(w * (1f - margin), h * (1f - margin)),
         strokeWidth = w * 0.055f,
-        cap = StrokeCap.Round
+        cap = StrokeCap.Round,
+        colorFilter = colorFilter
     )
     drawLine(
         color = AppColors.HistoryDurationArc,
         start = Offset(w * (1f - margin), h * margin),
         end = Offset(w * margin, h * (1f - margin)),
         strokeWidth = w * 0.055f,
-        cap = StrokeCap.Round
+        cap = StrokeCap.Round,
+        colorFilter = colorFilter
     )
 }
 
